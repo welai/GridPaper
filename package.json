@@ -19,6 +19,7 @@
   "homepage": "https://github.com/welai/test-repo#readme",
   "devDependencies": {
     "@types/node": "^10.7.1",
+    "@types/webpack": "^4.4.10",
     "acorn": "^5.7.1",
     "ts-node": "^7.0.1",
     "typescript": "^3.0.1"

@@ -5,7 +5,7 @@ const exec = require('child_process').exec;
 exec('npm install').on('close', () => {
 
     console.log('Running tsc...')
-    exec('tsc', (err, stdout, stderr) => {
+    exec('webpack', (err, stdout, stderr) => {
         if(err) throw err;
         console.log('TypeScript files compiled.')
     });
