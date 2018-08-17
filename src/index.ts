@@ -1,7 +1,4 @@
-import { hello } from './test'
-
 window.onload = () => {
-    console.log(hello)
     paper.setup('paperCanvas')
     let path = new paper.Path();
     path.strokeColor = 'black';

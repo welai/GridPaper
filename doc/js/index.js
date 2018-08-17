@@ -1,8 +1,4 @@
-"use strict";
-exports.__esModule = true;
-var test_1 = require("./test");
 window.onload = function () {
-    console.log(test_1.hello);
     paper.setup('paperCanvas');
     var path = new paper.Path();
     path.strokeColor = 'black';
