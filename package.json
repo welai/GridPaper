@@ -1,0 +1,30 @@
+{
+  "name": "test-repo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/welai/test-repo.git"
+  },
+  "author": "Celestial Phineas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/welai/test-repo/issues"
+  },
+  "homepage": "https://github.com/welai/test-repo#readme",
+  "devDependencies": {
+    "@types/node": "^10.7.1",
+    "acorn": "^5.7.1",
+    "ts-node": "^7.0.1",
+    "typescript": "^3.0.1"
+  },
+  "dependencies": {
+    "@types/paper": "^0.11.1",
+    "paper": "^0.11.5"
+  }
+}
