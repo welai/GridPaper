@@ -15,9 +15,11 @@ if(releaseFlag) {
 
 var run = cmd => new Promise((resolve, reject) => {
     let childProcess = exec(cmd, (err, stdout, stderr) => {
-        let errMsg = err? stdout? stderr? null: stderr: stdout: err
-        if(errMsg) reject(`${errMsg}`)
-        resolve(childProcess)
+        let errMsg = err? stdout? stderr? null: stderr: stdout: err;
+        console.log(stdout);
+        console.log(stderr);
+        if(errMsg) reject(`${errMsg}`);
+        resolve(childProcess);
     })
 })
 
@@ -35,5 +37,6 @@ run('npm install')
             .on('error', err => { throw err })
             .pipe(fs.createWriteStream('doc/js/paper.js', {flags: 'w'}).on('error', err => { throw err }))
             .on('close', () => console.log('Paper.js copied.'));
-    });
+    })
+    .catch(err => console.log(err));
 })
