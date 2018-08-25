@@ -23,20 +23,16 @@ var run = cmd => new Promise((resolve, reject) => {
     })
 })
 
-console.log('Running npm install...')
-run('npm install')
+console.log('Bundling .ts files...');
+run('webpack')
 .then(() => {
-    console.log('Bundling .ts files...');
-    run('webpack')
-    .then(() => {
-        console.log('Bundling done.');
-    })
-    .then(() => {
-        console.log('Copying paper.js...');
-        fs  .createReadStream(paperjs)
-            .on('error', err => { throw err })
-            .pipe(fs.createWriteStream('doc/js/paper.js', {flags: 'w'}).on('error', err => { throw err }))
-            .on('close', () => console.log('Paper.js copied.'));
-    })
-    .catch(err => console.log(err));
+    console.log('Bundling done.');
 })
+.then(() => {
+    console.log('Copying paper.js...');
+    fs  .createReadStream(paperjs)
+        .on('error', err => { throw err })
+        .pipe(fs.createWriteStream('doc/js/paper.js', {flags: 'w'}).on('error', err => { throw err }))
+        .on('close', () => console.log('Paper.js copied.'));
+})
+.catch(err => console.log(err));
