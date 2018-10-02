@@ -46,6 +46,7 @@ class CanvasUI {
     this.wrapper.appendChild(canvas.cloneNode(true));
     canvas.parentNode.replaceChild(this.wrapper, canvas);
     this.wrapper.style.display = 'inline-block';
+    this.wrapper.style.position = 'relative';
     // Horizontal dual range bar for scrolling
     let hbar = document.createElement('div');
     hbar.id = 'horizontal-scrolling-bar';
