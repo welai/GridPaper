@@ -11,7 +11,7 @@ interface Config {
 };
 
 var defaultConfig: Config = {
-  canvasID: 'paperCanvas',
+  canvasID: 'preview',
   gridSeries: [[0.1, 0.1], [0.2, 0.2], [0.5, 0.1], [1, 0.5], [2, 2], [5, 1], [10, 1]],
   minX: -5000, maxX: 5000, minY: -5000, maxY: 5000,
 };
@@ -36,51 +36,72 @@ var canvasSize: paper.Point;
 
 // A user interface on canvas
 class CanvasUI {
-  private wrapper:HTMLElement = document.createElement('div');
-  private canvas: HTMLElement;
-  horizontalBar: dual.HRange;
-  verticalBar: dual.VRange;
+  private container:  HTMLElement;
+  private uiOverlay:  HTMLElement;
+  canvas:             HTMLElement;
+  horizontalBar:      dual.HRange;
+  verticalBar:        dual.VRange;
 
-  constructor(canvas: HTMLElement) {
-    this.canvas = canvas;
-    this.wrapper.appendChild(canvas.cloneNode(true));
-    canvas.parentNode.replaceChild(this.wrapper, canvas);
-    this.wrapper.style.display = 'inline-block';
-    this.wrapper.style.position = 'relative';
+  constructor(container: HTMLElement) {
+    this.container = container;
+    this.container.style.position = 'relative';
+    // Create canvas
+    this.canvas = document.createElement('canvas');
+    this.canvas.style.position = 'absolute';
+    this.canvas.id = (this.container.id ? this.container.id : 'preview-container') + '-canvas';
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = '100%';
+    this.container.appendChild(this.canvas);
+    // Create UI Overlay
+    this.uiOverlay = document.createElement('div');
+    this.uiOverlay.style.position = 'relative';
+    this.uiOverlay.style.width = '100%';
+    this.uiOverlay.style.height = '100%';
+    this.container.appendChild(this.uiOverlay);
     // Horizontal dual range bar for scrolling
+    let hbarContainer = document.createElement('div');
+    hbarContainer.style.height = '20px';
+    hbarContainer.style.width = 'calc(100% - 100px)';
+    hbarContainer.style.margin = '10px 50px';
+    hbarContainer.style.position = 'absolute';
+    hbarContainer.style.bottom = '0px';
     let hbar = document.createElement('div');
     hbar.id = 'horizontal-scrolling-bar';
-    hbar.style.height = '20px';
-    hbar.style.margin = '0px 20px';
-    hbar.style.top = '-30px';
+    hbar.style.height = '100%';
+    hbar.style.width = '100%';
     hbar.style.position = 'relative';
-    this.wrapper.appendChild(hbar);
+    hbarContainer.appendChild(hbar);
+    this.uiOverlay.appendChild(hbarContainer);
     this.horizontalBar = dual.HRange.getObject(hbar.id);
     // Vertical dual range bar for scrolling
+    let vbarContainer = document.createElement('div');
+    vbarContainer.style.height = 'calc(100% - 100px)';
+    vbarContainer.style.width = '20px';
+    vbarContainer.style.margin = '50px 10px';
+    vbarContainer.style.position = 'absolute';
+    vbarContainer.style.right = '0px';
     let vbar = document.createElement('div');
     vbar.id = 'vertical-scrolling-bar';
-    vbar.style.height = '200px';
-    vbar.style.width = '20px';
-    vbar.style.margin = '20px 0px';
-    vbar.style.cssFloat = 'right';
+    vbar.style.height = '100%';
+    vbar.style.width = '100%';
     vbar.style.position = 'relative';
-    vbar.style.top = '0px';
-    vbar.style.right = '0px';
-    this.wrapper.appendChild(vbar);
+    vbarContainer.appendChild(vbar);
+    this.uiOverlay.appendChild(vbarContainer);
     this.verticalBar = dual.VRange.getObject(vbar.id);
+    (window as any)['canvasUI'] = this;
   }
 
   destruct(): void {
-    this.wrapper.parentNode.replaceChild(this.wrapper, this.canvas);
+    this.container.removeChild(this.uiOverlay);
   }
 };
 
 window.addEventListener('load', () => {
   try {
-    var canvas: HTMLElement = document.getElementById(config.canvasID);
-    var ui = new CanvasUI(canvas);
-
-    paper.setup(config.canvasID);
+    var div: HTMLElement = document.getElementById(config.canvasID);
+    var ui = new CanvasUI(div);
+    
+    paper.setup(ui.canvas.id);
     paper.tool = new paper.Tool();
     paper.tool.onMouseDown = (event: paper.ToolEvent) => {
       paper.project.view.translate(new paper.Point(10, 10));
