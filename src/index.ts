@@ -13,7 +13,7 @@ interface Config {
 var defaultConfig: Config = {
   canvasID: 'preview',
   gridSeries: [[0.1, 0.1], [0.2, 0.2], [0.5, 0.1], [1, 0.5], [2, 2], [5, 1], [10, 1]],
-  minX: -5000, maxX: 5000, minY: -5000, maxY: 5000,
+  minX: -4000, maxX: 4000, minY: -6000, maxY: 6000,
 };
 
 var config: Config = defaultConfig;
