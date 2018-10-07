@@ -38,9 +38,10 @@ var canvasSize: paper.Point;
 class CanvasUI {
   private container:  HTMLElement;
   private uiOverlay:  HTMLElement;
+  private horizontalBar: dual.HRange;
+  private verticalBar:   dual.VRange;
   canvas:             HTMLElement;
-  horizontalBar:      dual.HRange;
-  verticalBar:        dual.VRange;
+  displayRect:        { minX: number, maxX: number, minY: number, maxY: number };
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -89,6 +90,29 @@ class CanvasUI {
     this.uiOverlay.appendChild(vbarContainer);
     this.verticalBar = dual.VRange.getObject(vbar.id);
     (window as any)['canvasUI'] = this;
+    this.initView();
+    this.horizontalBar.addLowerRangeChangeCallback((val: number) => { this.syncViewByHorizontal() });
+    this.horizontalBar.addUpperRangeChangeCallback((val: number) => { this.syncViewByHorizontal() });
+    this.verticalBar.addLowerRangeChangeCallback((val: number) => { this.syncViewByVertical() });
+    this.verticalBar.addUpperRangeChangeCallback((val: number) => { this.syncViewByVertical() });
+  }
+
+  initView(): void {
+    // Init the display view to fit the whole window
+    this.displayRect.minX = config.minX;
+    this.displayRect.maxX = config.maxX;
+    this.displayRect.minY = config.minY;
+    this.displayRect.maxY = config.maxY;
+  }
+
+  // Synchronize the display rect with the UI elements & v.v.
+  syncViewByHorizontal(): void {
+    let minX = this.horizontalBar.lowerRange;
+    let maxX = this.horizontalBar.upperRange;
+    // TODO
+  }
+  syncViewByVertical(): void {
+
   }
 
   destruct(): void {
