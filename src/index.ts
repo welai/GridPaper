@@ -38,10 +38,15 @@ var canvasSize: paper.Point;
 class CanvasUI {
   private container:  HTMLElement;
   private uiOverlay:  HTMLElement;
+  canvas:             HTMLElement;
   private horizontalBar: dual.HRange;
   private verticalBar:   dual.VRange;
-  canvas:             HTMLElement;
-  displayRect:        { minX: number, maxX: number, minY: number, maxY: number };
+  private aspectLock = true;
+  displayRect:        { minX: number, maxX: number, minY: number, maxY: number }
+    = { minX: config.minX, maxX: config.maxX, minY: config.minY, maxY: config.maxY };
+
+  get aspectLocked() { return this.aspectLock; }
+  set aspectLocked(newVal) { this.aspectLock = newVal; }
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -63,7 +68,7 @@ class CanvasUI {
     let hbarContainer = document.createElement('div');
     hbarContainer.style.height = '20px';
     hbarContainer.style.width = 'calc(100% - 100px)';
-    hbarContainer.style.margin = '10px 50px';
+    hbarContainer.style.margin = '10px 30px';
     hbarContainer.style.position = 'absolute';
     hbarContainer.style.bottom = '0px';
     let hbar = document.createElement('div');
@@ -74,11 +79,13 @@ class CanvasUI {
     hbarContainer.appendChild(hbar);
     this.uiOverlay.appendChild(hbarContainer);
     this.horizontalBar = dual.HRange.getObject(hbar.id);
+    this.horizontalBar.lowerBound = 0;
+    this.horizontalBar.upperBound = 1;
     // Vertical dual range bar for scrolling
     let vbarContainer = document.createElement('div');
     vbarContainer.style.height = 'calc(100% - 100px)';
     vbarContainer.style.width = '20px';
-    vbarContainer.style.margin = '50px 10px';
+    vbarContainer.style.margin = '30px 10px';
     vbarContainer.style.position = 'absolute';
     vbarContainer.style.right = '0px';
     let vbar = document.createElement('div');
@@ -89,30 +96,64 @@ class CanvasUI {
     vbarContainer.appendChild(vbar);
     this.uiOverlay.appendChild(vbarContainer);
     this.verticalBar = dual.VRange.getObject(vbar.id);
+    this.verticalBar.lowerBound = 0;
+    this.verticalBar.upperBound = 1;
     (window as any)['canvasUI'] = this;
     this.initView();
-    this.horizontalBar.addLowerRangeChangeCallback((val: number) => { this.syncViewByHorizontal() });
-    this.horizontalBar.addUpperRangeChangeCallback((val: number) => { this.syncViewByHorizontal() });
-    this.verticalBar.addLowerRangeChangeCallback((val: number) => { this.syncViewByVertical() });
-    this.verticalBar.addUpperRangeChangeCallback((val: number) => { this.syncViewByVertical() });
+    this.horizontalBar.addLowerRangeChangeCallback((val: number) => { this.syncViewByHorizontal(); });
+    this.horizontalBar.addUpperRangeChangeCallback((val: number) => { this.syncViewByHorizontal(); });
+    this.verticalBar.addLowerRangeChangeCallback((val: number) => { this.syncViewByVertical(); });
+    this.verticalBar.addUpperRangeChangeCallback((val: number) => { this.syncViewByVertical(); });
   }
 
   initView(): void {
-    // Init the display view to fit the whole window
-    this.displayRect.minX = config.minX;
-    this.displayRect.maxX = config.maxX;
-    this.displayRect.minY = config.minY;
-    this.displayRect.maxY = config.maxY;
+    // Min differences of the range bars
+    let rx = this.canvas.clientWidth / (config.maxX - config.minX);
+    let ry = this.canvas.clientHeight / (config.maxY - config.minY);
+    if(rx > ry) {
+      this.horizontalBar.relativeDifference = 0.1 / ry * rx;
+      this.verticalBar.relativeDifference = 0.1;
+    } else {
+      this.horizontalBar.relativeDifference = 0.1;
+      this.verticalBar.relativeDifference = 0.1 / rx * ry;
+    }
+    // TODO: Initialize the view
   }
 
   // Synchronize the display rect with the UI elements & v.v.
+  // But these function do not actually refresh the view
   syncViewByHorizontal(): void {
-    let minX = this.horizontalBar.lowerRange;
-    let maxX = this.horizontalBar.upperRange;
-    // TODO
+    let lower = this.horizontalBar.lowerRange;
+    let upper = this.horizontalBar.upperRange;
+    var minX = lower * (config.maxX - config.minX);
+    var maxX = upper * (config.maxX - config.minX);
+    this.displayRect.minX = minX;
+    this.displayRect.maxX = maxX;
+    // Calculate the veritcal bar
+    if(this.aspectLock) {
+      let displayAspect = this.canvas.clientWidth / this.canvas.clientHeight;
+      let verticalDiff = (maxX - minX) / displayAspect;
+      let verticalMid = (this.displayRect.minY + this.displayRect.maxY) / 2;
+      if(verticalMid - verticalDiff/2 < config.minY) {
+        this.displayRect.minY = config.minY;
+        this.displayRect.maxY = config.minY + verticalDiff;
+      } else if(verticalMid + verticalDiff/2 > config.maxY) {
+        this.displayRect.minY = config.maxY - verticalDiff;
+        this.displayRect.maxY = config.maxY;
+      } else {
+        this.displayRect.minY = verticalMid - verticalDiff/2;
+        this.displayRect.maxY = verticalMid + verticalDiff/2;
+      }
+    }
+    // Synchronize the changes to the scroll bars
+    this.verticalBar.lowerRange = (config.maxY - this.displayRect.maxY)/(config.maxY - config.minY);
+    this.verticalBar.upperRange = (config.maxY - this.displayRect.minY)/(config.maxY - config.minY);
   }
-  syncViewByVertical(): void {
-
+  syncView(): void {
+    let lower = 1 - this.verticalBar.lowerRange;
+    let upper = 1 - this.verticalBar.upperRange;
+    var minY = lower * (config.maxX - config.minX);
+    // TODO: Continue this part
   }
 
   destruct(): void {
