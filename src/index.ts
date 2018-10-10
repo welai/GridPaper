@@ -42,8 +42,17 @@ class CanvasUI {
   private horizontalBar: dual.HRange;
   private verticalBar:   dual.VRange;
   private aspectLock = true;
-  displayRect:        { minX: number, maxX: number, minY: number, maxY: number }
-    = { minX: config.minX, maxX: config.maxX, minY: config.minY, maxY: config.maxY };
+  displayRect = {
+    _minx: config.minX, _maxx: config.maxX, _miny: config.minY, _maxy: config.maxY,
+    get minX() { return this._minx; },
+    get maxX() { return this._maxx; },
+    get minY() { return this._miny; },
+    get maxY() { return this._maxy; },
+    set minX(newVal: number) { this._minx = newVal; },
+    set maxX(newVal: number) { this._maxx = newVal; },
+    set minY(newVal: number) { this._miny = newVal; },
+    set maxY(newVal: number) { this._maxy = newVal; },
+  };
 
   get aspectLocked() { return this.aspectLock; }
   set aspectLocked(newVal) { this.aspectLock = newVal; }
