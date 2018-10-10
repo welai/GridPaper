@@ -44,7 +44,7 @@ var currentBound: paper.Point[] = [];
 var canvasSize: paper.Point;
 
 // A user interface on canvas
-class PaperViewer {
+class GridPaper {
   private container:  HTMLElement;
   private uiOverlay:  HTMLElement;
   canvas:             HTMLCanvasElement;
@@ -219,7 +219,7 @@ class PaperViewer {
 window.addEventListener('load', () => {
   try {
     var div: HTMLElement = document.getElementById(config.elementID);
-    var canvasViewer = new PaperViewer(div);
+    var canvasViewer = new GridPaper(div);
     
     paper.setup(canvasViewer.canvas.id);
     paper.tool = new paper.Tool();
