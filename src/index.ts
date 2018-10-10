@@ -35,7 +35,6 @@ var currentBound: paper.Point[] = [];
 var canvasSize: paper.Point;
 
 // A user interface on canvas
-// TODO: Solve the canvas resolution problem
 class CanvasUI {
   private container:  HTMLElement;
   private uiOverlay:  HTMLElement;
@@ -59,12 +58,19 @@ class CanvasUI {
     this.canvas.style.width = '100%';
     this.canvas.style.height = '100%';
     this.container.appendChild(this.canvas);
+    var resizeCallback = () => {
+      this.canvas.width   = this.canvas.clientWidth;
+      this.canvas.height  = this.canvas.clientHeight;
+    }
+    resizeCallback();
+    this.canvas.addEventListener('resize', resizeCallback);
     // Create UI Overlay
     this.uiOverlay = document.createElement('div');
     this.uiOverlay.style.position = 'relative';
     this.uiOverlay.style.width = '100%';
     this.uiOverlay.style.height = '100%';
     this.container.appendChild(this.uiOverlay);
+
     // Horizontal dual range bar for scrolling
     let hbarContainer = document.createElement('div');
     hbarContainer.style.height = '20px';
@@ -99,7 +105,8 @@ class CanvasUI {
     this.verticalBar = dual.VRange.getObject(vbar.id);
     this.verticalBar.lowerBound = 0;
     this.verticalBar.upperBound = 1;
-    (window as any)['canvasUI'] = this;
+    // (window as any)['canvasUI'] = this;
+
     this.initView();
     this.horizontalBar.addLowerRangeChangeCallback((val: number) => { this.syncViewByHorizontal(); this.display(); });
     this.horizontalBar.addUpperRangeChangeCallback((val: number) => { this.syncViewByHorizontal(); this.display(); });
