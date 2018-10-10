@@ -1,29 +1,5 @@
 import * as dual from 'dual-range-bar';
-import Rect from './Rect';
-
-// Configurations
-
-interface UserConfig {
-  elementID: string,
-  // The grid series
-  gridSeries?: number[][],
-  // Coordinate limit
-  bound?: Rect
-};
-
-interface Config extends UserConfig {
-  elementID: string,
-  // The grid series
-  gridSeries: number[][],
-  // Coordinate limit
-  bound: Rect
-};
-
-var defaultConfig: Config = {
-  elementID: 'preview',
-  gridSeries: [[0.1, 0.1], [0.2, 0.2], [0.5, 0.1], [1, 0.5], [2, 2], [5, 1], [10, 1]],
-  bound: { minX: -4000, maxX: 4000, minY: -6000, maxY: 6000 },
-};
+import { Config, defaultConfig } from './Config';
 
 var config: Config = defaultConfig;
 
@@ -47,10 +23,10 @@ var canvasSize: paper.Point;
 class GridPaper {
   private container:  HTMLElement;
   private uiOverlay:  HTMLElement;
-  canvas:             HTMLCanvasElement;
   private horizontalBar: dual.HRange;
   private verticalBar:   dual.VRange;
   private aspectLock = true;
+  canvas:             HTMLCanvasElement;
   displayRect = {
     _minx: config.bound.minX, _maxx: config.bound.maxX, _miny: config.bound.minY, _maxy: config.bound.maxY,
     get minX() { return this._minx; },
