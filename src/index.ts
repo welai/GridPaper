@@ -1,19 +1,28 @@
 import * as dual from 'dual-range-bar';
+import Rect from './Rect';
 
 // Configurations
 
-interface Config {
+interface UserConfig {
   elementID: string,
   // The grid series
   gridSeries?: number[][],
   // Coordinate limit
-  minX?:number, maxX?: number, minY?:number, maxY?:number,
+  bound?: Rect
+};
+
+interface Config extends UserConfig {
+  elementID: string,
+  // The grid series
+  gridSeries: number[][],
+  // Coordinate limit
+  bound: Rect
 };
 
 var defaultConfig: Config = {
   elementID: 'preview',
   gridSeries: [[0.1, 0.1], [0.2, 0.2], [0.5, 0.1], [1, 0.5], [2, 2], [5, 1], [10, 1]],
-  minX: -4000, maxX: 4000, minY: -6000, maxY: 6000,
+  bound: { minX: -4000, maxX: 4000, minY: -6000, maxY: 6000 },
 };
 
 var config: Config = defaultConfig;
@@ -43,7 +52,7 @@ class PaperViewer {
   private verticalBar:   dual.VRange;
   private aspectLock = true;
   displayRect = {
-    _minx: config.minX, _maxx: config.maxX, _miny: config.minY, _maxy: config.maxY,
+    _minx: config.bound.minX, _maxx: config.bound.maxX, _miny: config.bound.minY, _maxy: config.bound.maxY,
     get minX() { return this._minx; },
     get maxX() { return this._maxx; },
     get minY() { return this._miny; },
@@ -125,8 +134,8 @@ class PaperViewer {
 
   initView(): void {
     // Min differences of the range bars
-    let rx = this.canvas.width / (config.maxX - config.minX);
-    let ry = this.canvas.height / (config.maxY - config.minY);
+    let rx = this.canvas.width / (config.bound.maxX - config.bound.minX);
+    let ry = this.canvas.height / (config.bound.maxY - config.bound.minY);
     if(rx > ry) {
       this.horizontalBar.relativeMinDifference = 0.1 * rx / ry;
       this.horizontalBar.relativeMaxDifference = 1.0;
@@ -146,8 +155,8 @@ class PaperViewer {
   syncViewByHorizontal(): void {
     let lower = this.horizontalBar.lowerRange;
     let upper = this.horizontalBar.upperRange;
-    var minX = lower * (config.maxX - config.minX);
-    var maxX = upper * (config.maxX - config.minX);
+    var minX = lower * (config.bound.maxX - config.bound.minX);
+    var maxX = upper * (config.bound.maxX - config.bound.minX);
     this.displayRect.minX = minX;
     this.displayRect.maxX = maxX;
     // Calculate the veritcal bar
@@ -155,26 +164,26 @@ class PaperViewer {
       let displayAspect = this.canvas.width / this.canvas.height;
       let verticalDiff = (maxX - minX) / displayAspect;
       let verticalMid = (this.displayRect.minY + this.displayRect.maxY) / 2;
-      if(verticalMid - verticalDiff/2 < config.minY) {
-        this.displayRect.minY = config.minY;
-        this.displayRect.maxY = config.minY + verticalDiff;
-      } else if(verticalMid + verticalDiff/2 > config.maxY) {
-        this.displayRect.minY = config.maxY - verticalDiff;
-        this.displayRect.maxY = config.maxY;
+      if(verticalMid - verticalDiff/2 < config.bound.minY) {
+        this.displayRect.minY = config.bound.minY;
+        this.displayRect.maxY = config.bound.minY + verticalDiff;
+      } else if(verticalMid + verticalDiff/2 > config.bound.maxY) {
+        this.displayRect.minY = config.bound.maxY - verticalDiff;
+        this.displayRect.maxY = config.bound.maxY;
       } else {
         this.displayRect.minY = verticalMid - verticalDiff/2;
         this.displayRect.maxY = verticalMid + verticalDiff/2;
       }
     }
     // Synchronize the changes to the scroll bars
-    this.verticalBar.setLowerRange((config.maxY - this.displayRect.maxY)/(config.maxY - config.minY));
-    this.verticalBar.setUpperRange((config.maxY - this.displayRect.minY)/(config.maxY - config.minY));
+    this.verticalBar.setLowerRange((config.bound.maxY - this.displayRect.maxY)/(config.bound.maxY - config.bound.minY));
+    this.verticalBar.setUpperRange((config.bound.maxY - this.displayRect.minY)/(config.bound.maxY - config.bound.minY));
   }
   syncViewByVertical(): void {
     let lower = 1 - this.verticalBar.upperRange;
     let upper = 1 - this.verticalBar.lowerRange;
-    var minY = lower * (config.maxY - config.minY);
-    var maxY = upper * (config.maxY - config.minY);
+    var minY = lower * (config.bound.maxY - config.bound.minY);
+    var maxY = upper * (config.bound.maxY - config.bound.minY);
     this.displayRect.minY = minY;
     this.displayRect.maxY = maxY;
     // Calculate the vertical bar
@@ -182,20 +191,20 @@ class PaperViewer {
       let displayAspect = this.canvas.width / this.canvas.height;
       let horizontalDiff = (maxY - minY) * displayAspect;
       let horizontalMid = (this.displayRect.minX + this.displayRect.maxX) / 2;
-      if(horizontalMid - horizontalDiff/2 < config.minX) {
-        this.displayRect.minX = config.minX;
-        this.displayRect.maxX = config.minX + horizontalDiff;
-      } else if(horizontalMid + horizontalDiff/2 > config.maxX) {
-        this.displayRect.minX = config.maxX - horizontalDiff;
-        this.displayRect.maxX = config.maxX;
+      if(horizontalMid - horizontalDiff/2 < config.bound.minX) {
+        this.displayRect.minX = config.bound.minX;
+        this.displayRect.maxX = config.bound.minX + horizontalDiff;
+      } else if(horizontalMid + horizontalDiff/2 > config.bound.maxX) {
+        this.displayRect.minX = config.bound.maxX - horizontalDiff;
+        this.displayRect.maxX = config.bound.maxX;
       } else {
         this.displayRect.minX = horizontalMid - horizontalDiff/2;
         this.displayRect.maxX = horizontalMid + horizontalDiff/2;
       }
     }
     // Synchronize the changes to the scroll bars
-    this.horizontalBar.setLowerRange((this.displayRect.minX - config.minX)/(config.maxX - config.minX));
-    this.horizontalBar.setUpperRange((this.displayRect.maxX - config.minX)/(config.maxX - config.minX));
+    this.horizontalBar.setLowerRange((this.displayRect.minX - config.bound.minX)/(config.bound.maxX - config.bound.minX));
+    this.horizontalBar.setUpperRange((this.displayRect.maxX - config.bound.minX)/(config.bound.maxX - config.bound.minX));
   }
   // Canvas display update
   display(): void {
