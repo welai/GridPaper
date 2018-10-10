@@ -1,7 +1,6 @@
 import Rect from './Rect';
 
 // Configurations
-
 export interface UserConfig {
   elementID: string,
   // The grid series

@@ -1,7 +1,6 @@
 import * as dual from 'dual-range-bar';
 import { Config, defaultConfig } from './Config';
-
-var config: Config = defaultConfig;
+import Rect from './Rect';
 
 (function checkWhenImported(): void {
   // Check if the script is running on a browser environment
@@ -26,25 +25,45 @@ class GridPaper {
   private horizontalBar: dual.HRange;
   private verticalBar:   dual.VRange;
   private aspectLock = true;
-  canvas:             HTMLCanvasElement;
-  displayRect = {
-    _minx: config.bound.minX, _maxx: config.bound.maxX, _miny: config.bound.minY, _maxy: config.bound.maxY,
-    get minX() { return this._minx; },
-    get maxX() { return this._maxx; },
-    get minY() { return this._miny; },
-    get maxY() { return this._maxy; },
-    set minX(newVal: number) { this._minx = newVal; },
-    set maxX(newVal: number) { this._maxx = newVal; },
-    set minY(newVal: number) { this._miny = newVal; },
-    set maxY(newVal: number) { this._maxy = newVal; },
-  };
+  canvas      : HTMLCanvasElement;
+  bound       : Rect;
+  displayRect : Rect;
 
   get aspectLocked() { return this.aspectLock; }
   set aspectLocked(newVal) { this.aspectLock = newVal; }
 
-  constructor(container: HTMLElement) {
+  constructor(config: Config) {
+    // UI and canvas container
+    var container = document.getElementById(config.elementID);
     this.container = container;
     this.container.style.position = 'relative';
+
+    // Display rect
+    this.displayRect = {
+      _minx: config.bound.minX, _maxx: config.bound.maxX, _miny: config.bound.minY, _maxy: config.bound.maxY,
+      get minX() { return this._minx; },
+      get maxX() { return this._maxx; },
+      get minY() { return this._miny; },
+      get maxY() { return this._maxy; },
+      set minX(newVal: number) { this._minx = newVal; },
+      set maxX(newVal: number) { this._maxx = newVal; },
+      set minY(newVal: number) { this._miny = newVal; },
+      set maxY(newVal: number) { this._maxy = newVal; },
+    } as Rect;
+
+    // Bound rect
+    this.bound = {
+      _minx: config.bound.minX, _maxx: config.bound.maxX, _miny: config.bound.minY, _maxy: config.bound.maxY,
+      get minX() { return this._minx; },
+      get maxX() { return this._maxx; },
+      get minY() { return this._miny; },
+      get maxY() { return this._maxy; },
+      set minX(newVal: number) { this._minx = newVal; },
+      set maxX(newVal: number) { this._maxx = newVal; },
+      set minY(newVal: number) { this._miny = newVal; },
+      set maxY(newVal: number) { this._maxy = newVal; },
+    } as Rect;
+
     // Create canvas
     this.canvas = document.createElement('canvas');
     this.canvas.style.position = 'absolute';
@@ -99,19 +118,18 @@ class GridPaper {
     this.verticalBar = dual.VRange.getObject(vbar.id);
     this.verticalBar.lowerBound = 0;
     this.verticalBar.upperBound = 1;
-    // (window as any)['canvasUI'] = this;
 
     this.initView();
-    this.horizontalBar.addLowerRangeChangeCallback((val: number) => { this.syncViewByHorizontal(); this.display(); });
-    this.horizontalBar.addUpperRangeChangeCallback((val: number) => { this.syncViewByHorizontal(); this.display(); });
-    this.verticalBar.addLowerRangeChangeCallback((val: number) => { this.syncViewByVertical(); this.display(); });
-    this.verticalBar.addUpperRangeChangeCallback((val: number) => { this.syncViewByVertical(); this.display(); });
+    this.horizontalBar.addLowerRangeChangeCallback((val: number) => { this.syncViewByHorizontal(); });
+    this.horizontalBar.addUpperRangeChangeCallback((val: number) => { this.syncViewByHorizontal(); });
+    this.verticalBar.addLowerRangeChangeCallback((val: number) => { this.syncViewByVertical(); });
+    this.verticalBar.addUpperRangeChangeCallback((val: number) => { this.syncViewByVertical(); });
   }
 
   initView(): void {
     // Min differences of the range bars
-    let rx = this.canvas.width / (config.bound.maxX - config.bound.minX);
-    let ry = this.canvas.height / (config.bound.maxY - config.bound.minY);
+    let rx = this.canvas.width / (this.bound.maxX - this.bound.minX);
+    let ry = this.canvas.height / (this.bound.maxY - this.bound.minY);
     if(rx > ry) {
       this.horizontalBar.relativeMinDifference = 0.1 * rx / ry;
       this.horizontalBar.relativeMaxDifference = 1.0;
@@ -123,7 +141,6 @@ class GridPaper {
       this.verticalBar.relativeMinDifference = 0.1 * ry / rx;
       this.verticalBar.relativeMaxDifference = 1.0;
     }
-    // TODO: Initialize the view
   }
 
   // Synchronize the display rect with the UI elements & v.v.
@@ -131,8 +148,8 @@ class GridPaper {
   syncViewByHorizontal(): void {
     let lower = this.horizontalBar.lowerRange;
     let upper = this.horizontalBar.upperRange;
-    var minX = lower * (config.bound.maxX - config.bound.minX);
-    var maxX = upper * (config.bound.maxX - config.bound.minX);
+    var minX = lower * (this.bound.maxX - this.bound.minX);
+    var maxX = upper * (this.bound.maxX - this.bound.minX);
     this.displayRect.minX = minX;
     this.displayRect.maxX = maxX;
     // Calculate the veritcal bar
@@ -140,26 +157,26 @@ class GridPaper {
       let displayAspect = this.canvas.width / this.canvas.height;
       let verticalDiff = (maxX - minX) / displayAspect;
       let verticalMid = (this.displayRect.minY + this.displayRect.maxY) / 2;
-      if(verticalMid - verticalDiff/2 < config.bound.minY) {
-        this.displayRect.minY = config.bound.minY;
-        this.displayRect.maxY = config.bound.minY + verticalDiff;
-      } else if(verticalMid + verticalDiff/2 > config.bound.maxY) {
-        this.displayRect.minY = config.bound.maxY - verticalDiff;
-        this.displayRect.maxY = config.bound.maxY;
+      if(verticalMid - verticalDiff/2 < this.bound.minY) {
+        this.displayRect.minY = this.bound.minY;
+        this.displayRect.maxY = this.bound.minY + verticalDiff;
+      } else if(verticalMid + verticalDiff/2 > this.bound.maxY) {
+        this.displayRect.minY = this.bound.maxY - verticalDiff;
+        this.displayRect.maxY = this.bound.maxY;
       } else {
         this.displayRect.minY = verticalMid - verticalDiff/2;
         this.displayRect.maxY = verticalMid + verticalDiff/2;
       }
     }
     // Synchronize the changes to the scroll bars
-    this.verticalBar.setLowerRange((config.bound.maxY - this.displayRect.maxY)/(config.bound.maxY - config.bound.minY));
-    this.verticalBar.setUpperRange((config.bound.maxY - this.displayRect.minY)/(config.bound.maxY - config.bound.minY));
+    this.verticalBar.setLowerRange((this.bound.maxY - this.displayRect.maxY)/(this.bound.maxY - this.bound.minY));
+    this.verticalBar.setUpperRange((this.bound.maxY - this.displayRect.minY)/(this.bound.maxY - this.bound.minY));
   }
   syncViewByVertical(): void {
     let lower = 1 - this.verticalBar.upperRange;
     let upper = 1 - this.verticalBar.lowerRange;
-    var minY = lower * (config.bound.maxY - config.bound.minY);
-    var maxY = upper * (config.bound.maxY - config.bound.minY);
+    var minY = lower * (this.bound.maxY - this.bound.minY);
+    var maxY = upper * (this.bound.maxY - this.bound.minY);
     this.displayRect.minY = minY;
     this.displayRect.maxY = maxY;
     // Calculate the vertical bar
@@ -167,24 +184,20 @@ class GridPaper {
       let displayAspect = this.canvas.width / this.canvas.height;
       let horizontalDiff = (maxY - minY) * displayAspect;
       let horizontalMid = (this.displayRect.minX + this.displayRect.maxX) / 2;
-      if(horizontalMid - horizontalDiff/2 < config.bound.minX) {
-        this.displayRect.minX = config.bound.minX;
-        this.displayRect.maxX = config.bound.minX + horizontalDiff;
-      } else if(horizontalMid + horizontalDiff/2 > config.bound.maxX) {
-        this.displayRect.minX = config.bound.maxX - horizontalDiff;
-        this.displayRect.maxX = config.bound.maxX;
+      if(horizontalMid - horizontalDiff/2 < this.bound.minX) {
+        this.displayRect.minX = this.bound.minX;
+        this.displayRect.maxX = this.bound.minX + horizontalDiff;
+      } else if(horizontalMid + horizontalDiff/2 > this.bound.maxX) {
+        this.displayRect.minX = this.bound.maxX - horizontalDiff;
+        this.displayRect.maxX = this.bound.maxX;
       } else {
         this.displayRect.minX = horizontalMid - horizontalDiff/2;
         this.displayRect.maxX = horizontalMid + horizontalDiff/2;
       }
     }
     // Synchronize the changes to the scroll bars
-    this.horizontalBar.setLowerRange((this.displayRect.minX - config.bound.minX)/(config.bound.maxX - config.bound.minX));
-    this.horizontalBar.setUpperRange((this.displayRect.maxX - config.bound.minX)/(config.bound.maxX - config.bound.minX));
-  }
-  // Canvas display update
-  display(): void {
-
+    this.horizontalBar.setLowerRange((this.displayRect.minX - this.bound.minX)/(this.bound.maxX - this.bound.minX));
+    this.horizontalBar.setUpperRange((this.displayRect.maxX - this.bound.minX)/(this.bound.maxX - this.bound.minX));
   }
 
   destruct(): void {
@@ -194,8 +207,7 @@ class GridPaper {
 
 window.addEventListener('load', () => {
   try {
-    var div: HTMLElement = document.getElementById(config.elementID);
-    var canvasViewer = new GridPaper(div);
+    var canvasViewer = new GridPaper(defaultConfig);
     
     paper.setup(canvasViewer.canvas.id);
     paper.tool = new paper.Tool();
