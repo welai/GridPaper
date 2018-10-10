@@ -3,7 +3,7 @@ import * as dual from 'dual-range-bar';
 // Configurations
 
 interface Config {
-  canvasID: string,
+  elementID: string,
   // The grid series
   gridSeries?: number[][],
   // Coordinate limit
@@ -11,7 +11,7 @@ interface Config {
 };
 
 var defaultConfig: Config = {
-  canvasID: 'preview',
+  elementID: 'preview',
   gridSeries: [[0.1, 0.1], [0.2, 0.2], [0.5, 0.1], [1, 0.5], [2, 2], [5, 1], [10, 1]],
   minX: -4000, maxX: 4000, minY: -6000, maxY: 6000,
 };
@@ -35,7 +35,7 @@ var currentBound: paper.Point[] = [];
 var canvasSize: paper.Point;
 
 // A user interface on canvas
-class CanvasUI {
+class PaperViewer {
   private container:  HTMLElement;
   private uiOverlay:  HTMLElement;
   canvas:             HTMLCanvasElement;
@@ -209,10 +209,10 @@ class CanvasUI {
 
 window.addEventListener('load', () => {
   try {
-    var div: HTMLElement = document.getElementById(config.canvasID);
-    var ui = new CanvasUI(div);
+    var div: HTMLElement = document.getElementById(config.elementID);
+    var canvasViewer = new PaperViewer(div);
     
-    paper.setup(ui.canvas.id);
+    paper.setup(canvasViewer.canvas.id);
     paper.tool = new paper.Tool();
     paper.tool.onMouseDown = (event: paper.ToolEvent) => {
       paper.project.view.translate(new paper.Point(10, 10));
