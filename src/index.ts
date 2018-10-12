@@ -1,4 +1,3 @@
-import * as dual from 'dual-range-bar';
 import { Config, defaultConfig } from './Config';
 import Rect from './Rect';
 import UIOverlay from './UiController';
@@ -12,20 +11,27 @@ import UIOverlay from './UiController';
     throw Error('paper.js is not detected.\nThis might happen due to a broken dependency');
 })();
 
-// Current bound of the window
-// [Right top, Left bottom] corners of the canvas
-var currentBound: paper.Point[] = [];
-
-// Canvas bound of the window
-var canvasSize: paper.Point;
+// TODO: Enable custom callbacks
+interface GeometricRect extends Rect {
+  _minx: number, _maxx: number, _miny: number, _maxy: number,
+  setMinX?: (newVal: number) => void,
+  setMaxX?: (newVal: number) => void,
+  setMinY?: (newVal: number) => void,
+  setMaxY?: (newVal: number) => void
+}
 
 // A user interface on canvas
 export class GridPaper {
-  private uiOverlay:  UIOverlay;
+  // Grid paper container, the div element to initialize on
   container   : HTMLElement;
+  // UI control conponents
+  uiOverlay   : UIOverlay;
+  // Canvas to draw
   canvas      : HTMLCanvasElement;
-  bound       : Rect;
-  displayRect : Rect;
+
+  // Geometric properties
+  bound       : GeometricRect;
+  displayRect : GeometricRect;
 
   // Flags
   aspectLock = true;
@@ -38,6 +44,7 @@ export class GridPaper {
     this.container = container;
     this.container.style.position = 'relative';
 
+    let parent = this;
     // Display rect
     this.displayRect = {
       _minx: config.bound.minX, _maxx: config.bound.maxX, _miny: config.bound.minY, _maxy: config.bound.maxY,
@@ -45,11 +52,28 @@ export class GridPaper {
       get maxX() { return this._maxx; },
       get minY() { return this._miny; },
       get maxY() { return this._maxy; },
-      set minX(newVal: number) { this._minx = newVal; },
-      set maxX(newVal: number) { this._maxx = newVal; },
-      set minY(newVal: number) { this._miny = newVal; },
-      set maxY(newVal: number) { this._maxy = newVal; },
-    } as Rect;
+      set minX(newVal: number) { 
+        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this._minx = newVal;
+      },
+      set maxX(newVal: number) { 
+        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this._maxx = newVal;
+      },
+      set minY(newVal: number) { 
+        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this._miny = newVal;
+      },
+      set maxY(newVal: number) { 
+        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this._maxy = newVal;
+      },
+      // These setting functions have no callbacks
+      setMinX(newVal: number) { this._minx = newVal; },
+      setMaxX(newVal: number) { this._maxx = newVal; },
+      setMinY(newVal: number) { this._miny = newVal; },
+      setMaxY(newVal: number) { this._maxy = newVal; }
+    };
 
     // Bound rect
     this.bound = {
@@ -58,11 +82,28 @@ export class GridPaper {
       get maxX() { return this._maxx; },
       get minY() { return this._miny; },
       get maxY() { return this._maxy; },
-      set minX(newVal: number) { this._minx = newVal; },
-      set maxX(newVal: number) { this._maxx = newVal; },
-      set minY(newVal: number) { this._miny = newVal; },
-      set maxY(newVal: number) { this._maxy = newVal; },
-    } as Rect;
+      set minX(newVal: number) { 
+        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this._minx = newVal;
+      },
+      set maxX(newVal: number) { 
+        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this._maxx = newVal;
+      },
+      set minY(newVal: number) { 
+        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this._miny = newVal;
+      },
+      set maxY(newVal: number) { 
+        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this._maxy = newVal;
+      },
+      // These setting functions have no callbacks
+      setMinX(newVal: number) { this._minx = newVal; },
+      setMaxX(newVal: number) { this._maxx = newVal; },
+      setMinY(newVal: number) { this._miny = newVal; },
+      setMaxY(newVal: number) { this._maxy = newVal; }
+    };
 
     // Create canvas
     this.canvas = document.createElement('canvas');
@@ -79,7 +120,19 @@ export class GridPaper {
     this.canvas.addEventListener('resize', resizeCallback);
 
     // Create UI overlay
-    this.uiOverlay = new UIOverlay(this);
+    let uiOverlay = this.uiOverlay = new UIOverlay(this);
+
+    // Set up paper on canvas
+    paper.setup(this.canvas);
+    paper.tool = new paper.Tool();
+
+    paper.tool.onMouseDown = (event: paper.ToolEvent) => {
+      paper.project.view.translate(new paper.Point(10, 10));
+    }
+    var path = new paper.Path();
+    path.strokeColor = 'black';
+    path.add(new paper.Point(0, 0));
+    path.add(new paper.Point(400, 300));
   }
 
   destruct(): void {
@@ -89,16 +142,6 @@ export class GridPaper {
 
 window.addEventListener('load', () => {
   try {
-    var canvasViewer = new GridPaper(defaultConfig);
-    
-    paper.setup(canvasViewer.canvas.id);
-    paper.tool = new paper.Tool();
-    paper.tool.onMouseDown = (event: paper.ToolEvent) => {
-      paper.project.view.translate(new paper.Point(10, 10));
-    }
-    var path = new paper.Path();
-    path.strokeColor = 'black';
-    path.add(new paper.Point(0, 0));
-    path.add(new paper.Point(400, 300));
+    new GridPaper(defaultConfig);
   } catch(err) { console.log(err); }
 });
