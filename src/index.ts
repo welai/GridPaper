@@ -20,6 +20,24 @@ interface GeometricRect extends Rect {
   setMaxY?: (newVal: number) => void
 }
 
+class CanvasElementList extends Array<paper.Item> {
+  constructor(n: number);
+  constructor(...items: paper.Item[]);
+  constructor(...params: any[]) {
+    super(...params);
+  }
+  add(item: paper.Item): void {
+    this.push(item);
+  }
+  remove(item: paper.Item): void {
+    let i = this.indexOf(item);
+    if(i != -1) {
+      paper.project.
+      this.splice(i, 1);
+    }
+  }
+}
+
 // A user interface on canvas
 export class GridPaper {
   // Grid paper container, the div element to initialize on
@@ -28,6 +46,8 @@ export class GridPaper {
   uiOverlay   : UIOverlay;
   // Canvas to draw
   canvas      : HTMLCanvasElement;
+  // Controllable elements
+  elements    : CanvasElementList = new CanvasElementList();
 
   // Geometric properties
   bound       : GeometricRect;
@@ -120,7 +140,7 @@ export class GridPaper {
     this.canvas.addEventListener('resize', resizeCallback);
 
     // Create UI overlay
-    let uiOverlay = this.uiOverlay = new UIOverlay(this);
+    this.uiOverlay = new UIOverlay(this);
 
     // Set up paper on canvas
     paper.setup(this.canvas);
@@ -129,10 +149,13 @@ export class GridPaper {
     paper.tool.onMouseDown = (event: paper.ToolEvent) => {
       paper.project.view.translate(new paper.Point(10, 10));
     }
-    var path = new paper.Path();
-    path.strokeColor = 'black';
-    path.add(new paper.Point(0, 0));
-    path.add(new paper.Point(400, 300));
+    for(let i = config.bound.minX; i <= config.bound.maxX; i += 100) {
+      for(let j = config.bound.minY; j <= config.bound.maxY; j += 100) {
+        var point = new paper.Point(i, j);
+        var text = new paper.PointText({ content: `${i}, ${j}`, justification: 'center' });
+        text.point = point;
+      }
+    }
   }
 
   destruct(): void {
