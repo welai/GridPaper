@@ -4,10 +4,10 @@ import UIOverlay from './UiController';
 
 (function checkWhenImported(): void {
   // Check if the script is running on a browser environment
-  if(typeof window === 'undefined')
+  if (typeof window === 'undefined')
     throw Error('Grid paper only works on a browser.\nPlease check out if your configuration is correct.');
   // Check paper
-  if(typeof paper === 'undefined')
+  if (typeof paper === 'undefined')
     throw Error('paper.js is not detected.\nThis might happen due to a broken dependency');
 })();
 
@@ -20,38 +20,21 @@ interface GeometricRect extends Rect {
   setMaxY?: (newVal: number) => void
 }
 
-class CanvasElementList extends Array<paper.Item> {
-  constructor(n: number);
-  constructor(...items: paper.Item[]);
-  constructor(...params: any[]) {
-    super(...params);
-  }
-  add(item: paper.Item): void {
-    this.push(item);
-  }
-  remove(item: paper.Item): void {
-    let i = this.indexOf(item);
-    if(i != -1) {
-      paper.project.
-      this.splice(i, 1);
-    }
-  }
-}
-
 // A user interface on canvas
 export class GridPaper {
   // Grid paper container, the div element to initialize on
-  container   : HTMLElement;
+  container: HTMLElement;
   // UI control conponents
-  uiOverlay   : UIOverlay;
+  uiOverlay: UIOverlay;
   // Canvas to draw
-  canvas      : HTMLCanvasElement;
-  // Controllable elements
-  elements    : CanvasElementList = new CanvasElementList();
+  canvas: HTMLCanvasElement;
+  // Paper stuffs
+  paperProject: paper.Project;
+  paperTool: paper.Tool;
 
   // Geometric properties
-  bound       : GeometricRect;
-  displayRect : GeometricRect;
+  bound: GeometricRect;
+  displayRect: GeometricRect;
 
   // Flags
   aspectLock = true;
@@ -64,35 +47,65 @@ export class GridPaper {
     this.container = container;
     this.container.style.position = 'relative';
 
+    // Create canvas
+    this.canvas = document.createElement('canvas');
+    this.canvas.style.position = 'absolute';
+    this.canvas.id = (this.container.id ? this.container.id : 'preview-container') + '-canvas';
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = '100%';
+    this.container.appendChild(this.canvas);
+    var resizeCallback = () => {
+      this.canvas.width = this.canvas.clientWidth;
+      this.canvas.height = this.canvas.clientHeight;
+    }
+    resizeCallback();
+    this.canvas.addEventListener('resize', resizeCallback);
+
     let parent = this;
+    var display = () => {
+      let [ minX, maxX, minY, maxY ] = [
+        this.displayRect.minX,
+        this.displayRect.maxX,
+        this.displayRect.minY,
+        this.displayRect.maxY
+      ];
+      let [ w, h ] = [ this.canvas.width, this.canvas.height ];
+      this.paperProject.view.matrix.a = w/(maxX -minX);
+      this.paperProject.view.matrix.b = 0;
+      this.paperProject.view.matrix.c = 0;
+      this.paperProject.view.matrix.d = h/(minY - maxY);
+      this.paperProject.view.matrix.tx = w*minX/(minX - maxX);
+      this.paperProject.view.matrix.ty = h*maxY/(maxY - minY);
+    }
     // Display rect
-    this.displayRect = {
-      _minx: config.bound.minX, _maxx: config.bound.maxX, _miny: config.bound.minY, _maxy: config.bound.maxY,
+    (window as any).displayRect = this.displayRect = {
+      _minx: config.bound.minX, _maxx: config.bound.maxX, _maxy: config.bound.maxY,
+      _miny: config.bound.maxY - (config.bound.maxX - config.bound.minX)/this.canvas.width*this.canvas.height,
       get minX() { return this._minx; },
       get maxX() { return this._maxx; },
       get minY() { return this._miny; },
       get maxY() { return this._maxy; },
-      set minX(newVal: number) { 
-        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
-        this._minx = newVal;
+      set minX(newVal: number) {
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this.setMinX(newVal);
       },
-      set maxX(newVal: number) { 
-        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
-        this._maxx = newVal;
+      set maxX(newVal: number) {
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this.setMaxX(newVal);
       },
-      set minY(newVal: number) { 
-        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
-        this._miny = newVal;
+      set minY(newVal: number) {
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this.setMinY(newVal);
       },
-      set maxY(newVal: number) { 
-        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
-        this._maxy = newVal;
+      set maxY(newVal: number) {
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this.setMaxY(newVal);
       },
       // These setting functions have no callbacks
-      setMinX(newVal: number) { this._minx = newVal; },
-      setMaxX(newVal: number) { this._maxx = newVal; },
-      setMinY(newVal: number) { this._miny = newVal; },
-      setMaxY(newVal: number) { this._maxy = newVal; }
+      setMinX(newVal: number) { this._minx = newVal; display(); },
+      setMaxX(newVal: number) { this._maxx = newVal; display(); },
+      setMinY(newVal: number) { this._miny = newVal; display(); },
+      setMaxY(newVal: number) { this._maxy = newVal; display(); }
     };
 
     // Bound rect
@@ -102,21 +115,21 @@ export class GridPaper {
       get maxX() { return this._maxx; },
       get minY() { return this._miny; },
       get maxY() { return this._maxy; },
-      set minX(newVal: number) { 
-        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
-        this._minx = newVal;
+      set minX(newVal: number) {
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this.setMinX(newVal);
       },
-      set maxX(newVal: number) { 
-        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
-        this._maxx = newVal;
+      set maxX(newVal: number) {
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this.setMaxX(newVal);
       },
-      set minY(newVal: number) { 
-        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
-        this._miny = newVal;
+      set minY(newVal: number) {
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this.setMinY(newVal);
       },
-      set maxY(newVal: number) { 
-        if(parent.uiOverlay) { parent.uiOverlay.syncView(); }
-        this._maxy = newVal;
+      set maxY(newVal: number) {
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        this.setMaxY(newVal);
       },
       // These setting functions have no callbacks
       setMinX(newVal: number) { this._minx = newVal; },
@@ -125,32 +138,18 @@ export class GridPaper {
       setMaxY(newVal: number) { this._maxy = newVal; }
     };
 
-    // Create canvas
-    this.canvas = document.createElement('canvas');
-    this.canvas.style.position = 'absolute';
-    this.canvas.id = (this.container.id ? this.container.id : 'preview-container') + '-canvas';
-    this.canvas.style.width = '100%';
-    this.canvas.style.height = '100%';
-    this.container.appendChild(this.canvas);
-    var resizeCallback = () => {
-      this.canvas.width   = this.canvas.clientWidth;
-      this.canvas.height  = this.canvas.clientHeight;
-    }
-    resizeCallback();
-    this.canvas.addEventListener('resize', resizeCallback);
-
     // Create UI overlay
     this.uiOverlay = new UIOverlay(this);
 
     // Set up paper on canvas
-    paper.setup(this.canvas);
-    paper.tool = new paper.Tool();
+    this.paperProject = new paper.Project(this.canvas);
+    this.paperTool = new paper.Tool();
 
-    paper.tool.onMouseDown = (event: paper.ToolEvent) => {
-      paper.project.view.translate(new paper.Point(10, 10));
+    this.paperTool.onMouseDown = (event: paper.ToolEvent) => {
+      this.paperProject.view.translate(new paper.Point(10, 10));
     }
-    for(let i = config.bound.minX; i <= config.bound.maxX; i += 100) {
-      for(let j = config.bound.minY; j <= config.bound.maxY; j += 100) {
+    for(let i = config.bound.minX; i <= config.bound.maxX; i += 400) {
+      for(let j = config.bound.minY; j <= config.bound.maxY; j += 400) {
         var point = new paper.Point(i, j);
         var text = new paper.PointText({ content: `${i}, ${j}`, justification: 'center' });
         text.point = point;
@@ -166,5 +165,5 @@ export class GridPaper {
 window.addEventListener('load', () => {
   try {
     new GridPaper(defaultConfig);
-  } catch(err) { console.log(err); }
+  } catch (err) { console.log(err); }
 });

@@ -2,9 +2,13 @@ import { GridPaper } from './index';
 import * as dual from 'dual-range-bar';
 
 export default class UIOverlay {
-  // UI Overlay Container
+  /**
+   * UI Overlay Container
+   */
   container : HTMLElement;
-  // Synchronize UI components with the geometric properties
+  /**
+   * Synchronize UI components with the geometric properties
+   */
   syncView  : () => void;
   private horizontalBar : dual.HRange;
   private verticalBar   : dual.VRange;
@@ -72,8 +76,8 @@ export default class UIOverlay {
     var syncViewByHorizontal = () => {
       let lower = this.horizontalBar.lowerRange;
       let upper = this.horizontalBar.upperRange;
-      let minX = lower * (gridPaper.bound.maxX - gridPaper.bound.minX);
-      let maxX = upper * (gridPaper.bound.maxX - gridPaper.bound.minX);
+      let minX = lower * (gridPaper.bound.maxX - gridPaper.bound.minX) + gridPaper.bound.minX;
+      let maxX = upper * (gridPaper.bound.maxX - gridPaper.bound.minX) + gridPaper.bound.minX;
       gridPaper.displayRect.setMinX(minX);
       gridPaper.displayRect.setMaxX(maxX);
       // Calculate the veritcal bar
@@ -99,8 +103,8 @@ export default class UIOverlay {
     var syncViewByVertical = () => {
       let lower = 1 - this.verticalBar.upperRange;
       let upper = 1 - this.verticalBar.lowerRange;
-      let minY = lower * (gridPaper.bound.maxY - gridPaper.bound.minY);
-      let maxY = upper * (gridPaper.bound.maxY - gridPaper.bound.minY);
+      let minY = lower * (gridPaper.bound.maxY - gridPaper.bound.minY) + gridPaper.bound.minY;
+      let maxY = upper * (gridPaper.bound.maxY - gridPaper.bound.minY) + gridPaper.bound.minY;
       gridPaper.displayRect.setMinY(minY);
       gridPaper.displayRect.setMaxY(maxY);
       // Calculate the vertical bar
@@ -133,9 +137,9 @@ export default class UIOverlay {
       let boundWidth  = gridPaper.bound.maxX - gridPaper.bound.minX;
       let boundHeight = gridPaper.bound.maxY - gridPaper.bound.minY;
       let minX = (gridPaper.displayRect.minX - gridPaper.bound.minX)/boundWidth;
-      let maxX = (gridPaper.displayRect.maxX - gridPaper.bound.maxX)/boundWidth;
-      let minY = (gridPaper.displayRect.minY - gridPaper.bound.minY)/boundHeight;
-      let maxY = (gridPaper.displayRect.maxY - gridPaper.bound.maxY)/boundHeight;
+      let maxX = (gridPaper.displayRect.maxX - gridPaper.bound.minX)/boundWidth;
+      let minY = (gridPaper.displayRect.maxY - gridPaper.bound.minY)/boundHeight;
+      let maxY = (gridPaper.displayRect.minY - gridPaper.bound.maxY)/boundHeight;
       [
         this.horizontalBar.lowerRange,  this.horizontalBar.upperRange,
         this.verticalBar.lowerRange,    this.verticalBar.upperRange
