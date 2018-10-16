@@ -2,6 +2,9 @@ import { Config, defaultConfig } from './Config';
 import Rect from './Rect';
 import UIOverlay from './UiController';
 
+// TODO: Grids
+// TODO: Refactor the index file
+
 (function checkWhenImported(): void {
   // Check if the script is running on a browser environment
   if (typeof window === 'undefined')
@@ -267,12 +270,28 @@ export class GridPaper {
     }
 
     // Update view
-    this.displayRect.setMinX(expected.minX); this.displayRect.setMaxX(expected.maxX);
-    this.displayRect.setMinY(expected.minY); this.displayRect.setMaxY(expected.maxY);
-    
+    this.displayRect.minX = expected.minX;
+    this.displayRect.maxX = expected.maxX;
+    this.displayRect.minY = expected.minY;
+    this.displayRect.maxY = expected.maxY;
     this.uiOverlay.syncView();
   }
 
+  scrollHorizontally(offset: number) {
+    if(this.displayRect.minX + offset < this.bound.minX) offset = this.bound.minX - this.displayRect.minX;
+    if(this.displayRect.maxX + offset > this.bound.maxX) offset = this.bound.maxX - this.displayRect.maxX;
+    this.displayRect.minX += offset;
+    this.displayRect.maxX += offset;
+    this.uiOverlay.syncView();
+  }
+
+  scrollVertically(offset: number) {
+    if(this.displayRect.minY + offset < this.bound.minY) offset = this.bound.minY - this.displayRect.minY;
+    if(this.displayRect.maxY + offset > this.bound.maxY) offset = this.bound.maxY - this.displayRect.maxY;
+    this.displayRect.minY += offset;
+    this.displayRect.maxY += offset;
+    this.uiOverlay.syncView();
+  }
 
   destruct(): void {
     this.container.removeChild(this.uiOverlay.container);

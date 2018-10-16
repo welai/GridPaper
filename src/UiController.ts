@@ -177,8 +177,8 @@ export default class UIOverlay {
     // Binding preview window area events
     window.addEventListener('keydown', (event) => {
       if(this.mouseOver) {
-        if(event.key === 'Alt') this.altDownFlag    = true;
-        if(event.shiftKey)      this.shiftDownFlag  = true;
+        if(event.key === 'Alt')   this.altDownFlag    = true;
+        if(event.key === 'Shift') this.shiftDownFlag  = true;
         if(mac) { if(event.key === 'Meta')      this.ctrlDownFlag = true; }
         else    { if(event.key === 'Control')   this.ctrlDownFlag = true; }
       } else {
@@ -187,8 +187,8 @@ export default class UIOverlay {
     });
     window.addEventListener('keyup', (event) => {
       if(this.mouseOver) {
-        if(event.key === 'Alt') this.altDownFlag    = false;
-        if(event.shiftKey)      this.shiftDownFlag  = false;
+        if(event.key === 'Alt')   this.altDownFlag    = false;
+        if(event.key === 'Shift') this.shiftDownFlag  = false;
         if(mac) { if(event.key === 'Meta')      this.ctrlDownFlag = false; }
         else    { if(event.key === 'Control')   this.ctrlDownFlag = false; }
       } else {
@@ -197,11 +197,22 @@ export default class UIOverlay {
     });
     this.eventActiveArea.addEventListener('wheel', (event) => {
       event.preventDefault();
+
+      let r = (gridPaper.displayRect.maxX - gridPaper.displayRect.minX)/(gridPaper.bound.maxX - gridPaper.bound.minX);
+
       // Scaling 
       if(this.altDownFlag) {
         let pPos = gridPaper.paperProject.view.viewToProject(new paper.Point(event.offsetX, event.offsetY));
         let d = event.deltaY/1000;
         gridPaper.zoomDisplay(pPos, Math.exp(d));
+      }
+      if(this.shiftDownFlag) {
+        let d = event.deltaY/r;
+        if(d === 0) d = event.deltaX/r;
+        gridPaper.scrollHorizontally(d);
+      } else {
+        let d = -event.deltaY/r;
+        gridPaper.scrollVertically(d);
       }
     });
   }
