@@ -22,24 +22,59 @@ interface GeometricRect extends Rect {
 
 // A user interface on canvas
 export class GridPaper {
-  // Grid paper container, the div element to initialize on
+  /**
+   * Grid paper container, the div element to initialize on
+   */
   container: HTMLElement;
-  // UI control conponents
+  /**
+   * UI control conponents
+   */
   uiOverlay: UIOverlay;
-  // Canvas to draw
+  /**
+   * Canvas to draw
+   */
   canvas: HTMLCanvasElement;
+
   // Paper stuffs
+  /**
+   * Paper project instance
+   */
   paperProject: paper.Project;
+  /**
+   * Paper tool instance
+   */
   paperTool: paper.Tool;
 
   // Geometric properties
+  /**
+   * The coordinary boundary of the project
+   */
   bound: GeometricRect;
+  /**
+   * Rectangular area indicating current display
+   */
   displayRect: GeometricRect;
 
   // Flags
-  aspectLock = true;
+  private aspectLock = true;
   get aspectLocked() { return this.aspectLock; }
   set aspectLocked(newVal) { this.aspectLock = newVal; }
+  
+  display() {
+    let [ minX, maxX, minY, maxY ] = [
+      this.displayRect.minX,
+      this.displayRect.maxX,
+      this.displayRect.minY,
+      this.displayRect.maxY
+    ];
+    let [ w, h ] = [ this.canvas.width, this.canvas.height ];
+    this.paperProject.view.matrix.a = w/(maxX -minX);
+    this.paperProject.view.matrix.b = 0;
+    this.paperProject.view.matrix.c = 0;
+    this.paperProject.view.matrix.d = h/(minY - maxY);
+    this.paperProject.view.matrix.tx = w*minX/(minX - maxX);
+    this.paperProject.view.matrix.ty = h*maxY/(maxY - minY);
+  }
 
   constructor(config: Config) {
     // UI and canvas container
@@ -62,23 +97,8 @@ export class GridPaper {
     this.canvas.addEventListener('resize', resizeCallback);
 
     let parent = this;
-    var display = () => {
-      let [ minX, maxX, minY, maxY ] = [
-        this.displayRect.minX,
-        this.displayRect.maxX,
-        this.displayRect.minY,
-        this.displayRect.maxY
-      ];
-      let [ w, h ] = [ this.canvas.width, this.canvas.height ];
-      this.paperProject.view.matrix.a = w/(maxX -minX);
-      this.paperProject.view.matrix.b = 0;
-      this.paperProject.view.matrix.c = 0;
-      this.paperProject.view.matrix.d = h/(minY - maxY);
-      this.paperProject.view.matrix.tx = w*minX/(minX - maxX);
-      this.paperProject.view.matrix.ty = h*maxY/(maxY - minY);
-    }
     // Display rect
-    (window as any).displayRect = this.displayRect = {
+    this.displayRect = {
       _minx: config.bound.minX, _maxx: config.bound.maxX, _maxy: config.bound.maxY,
       _miny: config.bound.maxY - (config.bound.maxX - config.bound.minX)/this.canvas.width*this.canvas.height,
       get minX() { return this._minx; },
@@ -102,10 +122,10 @@ export class GridPaper {
         this.setMaxY(newVal);
       },
       // These setting functions have no callbacks
-      setMinX(newVal: number) { this._minx = newVal; display(); },
-      setMaxX(newVal: number) { this._maxx = newVal; display(); },
-      setMinY(newVal: number) { this._miny = newVal; display(); },
-      setMaxY(newVal: number) { this._maxy = newVal; display(); }
+      setMinX(newVal: number) { this._minx = newVal; parent.display(); },
+      setMaxX(newVal: number) { this._maxx = newVal; parent.display(); },
+      setMinY(newVal: number) { this._miny = newVal; parent.display(); },
+      setMaxY(newVal: number) { this._maxy = newVal; parent.display(); }
     };
 
     // Bound rect
@@ -132,10 +152,10 @@ export class GridPaper {
         this.setMaxY(newVal);
       },
       // These setting functions have no callbacks
-      setMinX(newVal: number) { this._minx = newVal; },
-      setMaxX(newVal: number) { this._maxx = newVal; },
-      setMinY(newVal: number) { this._miny = newVal; },
-      setMaxY(newVal: number) { this._maxy = newVal; }
+      setMinX(newVal: number) { this._minx = newVal; parent.display(); },
+      setMaxX(newVal: number) { this._maxx = newVal; parent.display(); },
+      setMinY(newVal: number) { this._miny = newVal; parent.display(); },
+      setMaxY(newVal: number) { this._maxy = newVal; parent.display(); }
     };
 
     // Create UI overlay
@@ -155,10 +175,100 @@ export class GridPaper {
         text.point = point;
       }
     }
+    this.display();
   }
+
+  // View controlling
+  /**
+   * Scaling the display rectangle
+   */
+  zoomDisplay(point: paper.Point, scale: number): void;
+  zoomDisplay(projectX: number, projectY: number, scale: number): void;
+  zoomDisplay(...args: any[]) {
+    // First case
+    var x, y: number;
+    if(typeof args[0] != 'number') {
+      x = (args[0] as paper.Point).x;
+      y = (args[0] as paper.Point).y;
+    } else {
+      x = args[0] as number;
+      y = args[1] as number;
+    }
+    let scale = args.pop();
+    // Too big to scale
+    if(this.displayRect.minX == this.bound.minX && this.displayRect.maxX == this.bound.maxX
+      || this.displayRect.minY == this.bound.minY && this.displayRect.maxY == this.bound.maxY)
+        return;
+    let offsets: Rect = {
+      minX: this.displayRect.minX - x,
+      maxX: this.displayRect.maxX - x,
+      minY: this.displayRect.minY - y,
+      maxY: this.displayRect.maxY - y
+    };
+    offsets.minX *= scale; offsets.maxX *= scale;
+    offsets.minY *= scale; offsets.maxY *= scale;
+    let expected: Rect = {
+      minX: offsets.minX + x,
+      maxX: offsets.maxX + x,
+      minY: offsets.minY + y,
+      maxY: offsets.maxY + y
+    }
+    if(expected.minY < this.bound.minY) {
+      let d = this.bound.minY - expected.minY;
+      expected.minY = this.bound.minY;
+      expected.maxY += d;
+      if(expected.maxY > this.bound.maxY) {
+        expected.maxY = this.bound.maxX;
+        let expectedDx = (this.bound.maxY - this.bound.minY)/this.canvas.height*this.canvas.width;
+        let diff = expectedDx - (expected.maxX - expected.minX);
+        expected.maxX += diff/2; expected.minX -= diff/2;
+      }
+    }
+    if(expected.maxY > this.bound.maxY) {
+      let d = expected.maxY - this.bound.maxY;
+      expected.maxY = this.bound.maxY;
+      expected.minY -= d;
+      if(expected.minY < this.bound.minY) {
+        expected.minY = this.bound.minY;
+        let expectedDx = (this.bound.maxY - this.bound.minY)/this.canvas.height*this.canvas.width;
+        let diff = expectedDx - (expected.maxX - expected.minX);
+        expected.minX += diff/2; expected.minX -= diff/2;
+      }
+    }
+    if(expected.minX < this.bound.minX) {
+      let d = this.bound.minX - expected.minX;
+      expected.minX = this.bound.minX;
+      expected.maxX += d;
+      if(expected.maxX > this.bound.maxX) {
+        expected.maxX = this.bound.maxX;
+        let expectedDy = (this.bound.maxX - this.bound.minX)/this.canvas.width*this.canvas.height;
+        let diff = expectedDy - (expected.maxY - expected.minY);
+        expected.maxY += diff/2; expected.minY -= diff/2;
+      }
+    }
+    if(expected.maxX > this.bound.maxX) {
+      let d = expected.maxX - this.bound.maxX;
+      expected.maxX = this.bound.maxX;
+      expected.minX -= d;
+      if(expected.minX < this.bound.minX) {
+        expected.minX = this.bound.minX;
+        let expectedDy = (this.bound.maxX - this.bound.minX)/this.canvas.width*this.canvas.height;
+        let diff = expectedDy - (expected.maxY - expected.minY);
+        expected.maxY += diff/2; expected.minY -= diff/2;
+      }
+    }
+
+    // Update view
+    this.displayRect.setMinX(expected.minX); this.displayRect.setMaxX(expected.maxX);
+    this.displayRect.setMinY(expected.minY); this.displayRect.setMaxY(expected.maxY);
+    
+    this.uiOverlay.syncView();
+  }
+
 
   destruct(): void {
     this.container.removeChild(this.uiOverlay.container);
+    this.container.removeChild(this.canvas);
   }
 };
 

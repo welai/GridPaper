@@ -7,11 +7,20 @@ export default class UIOverlay {
    */
   container : HTMLElement;
   /**
+   * This area lies below the UI components, and works as the event receiver
+   */
+  eventActiveArea: HTMLElement;
+  /**
    * Synchronize UI components with the geometric properties
    */
   syncView  : () => void;
   private horizontalBar : dual.HRange;
   private verticalBar   : dual.VRange;
+
+  // Flags
+  private ctrlDownFlag  = false;
+  private altDownFlag   = false;
+  private shiftDownFlag = false;
 
   constructor(gridPaper: GridPaper) {
     // Create UI Overlay
@@ -29,7 +38,7 @@ export default class UIOverlay {
     hbarContainer.style.position = 'absolute';
     hbarContainer.style.bottom = '0px';
     let hbar = document.createElement('div');
-    hbar.id = 'horizontal-scrolling-bar';
+    hbar.id = `horizontal-scrolling-bar-${new Date().getTime()}`;
     hbar.style.height = '100%';
     hbar.style.width = '100%';
     hbar.style.position = 'relative';
@@ -46,7 +55,7 @@ export default class UIOverlay {
     vbarContainer.style.position = 'absolute';
     vbarContainer.style.right = '0px';
     let vbar = document.createElement('div');
-    vbar.id = 'vertical-scrolling-bar';
+    vbar.id = `vertical-scrolling-bar-${new Date().getTime()}`;
     vbar.style.height = '100%';
     vbar.style.width = '100%';
     vbar.style.position = 'relative';
@@ -55,6 +64,14 @@ export default class UIOverlay {
     this.verticalBar = dual.VRange.getObject(vbar.id);
     this.verticalBar.lowerBound = 0;
     this.verticalBar.upperBound = 1;
+
+    // Event active area
+    this.eventActiveArea = document.createElement('div');
+    this.eventActiveArea.style.position = 'relative';
+    this.eventActiveArea.style.width = '100%';
+    this.eventActiveArea.style.height = '100%';
+    this.eventActiveArea.style.zIndex = '0';
+    this.container.appendChild(this.eventActiveArea);
 
     // Min differences of the range bars
     let rx = gridPaper.canvas.width / (gridPaper.bound.maxX - gridPaper.bound.minX);
@@ -81,7 +98,7 @@ export default class UIOverlay {
       gridPaper.displayRect.setMinX(minX);
       gridPaper.displayRect.setMaxX(maxX);
       // Calculate the veritcal bar
-      if (gridPaper.aspectLock) {
+      if (gridPaper.aspectLocked) {
         let displayAspect = gridPaper.canvas.width / gridPaper.canvas.height;
         let verticalDiff = (maxX - minX) / displayAspect;
         let verticalMid = (gridPaper.displayRect.minY + gridPaper.displayRect.maxY) / 2;
@@ -108,7 +125,7 @@ export default class UIOverlay {
       gridPaper.displayRect.setMinY(minY);
       gridPaper.displayRect.setMaxY(maxY);
       // Calculate the vertical bar
-      if (gridPaper.aspectLock) {
+      if (gridPaper.aspectLocked) {
         let displayAspect = gridPaper.canvas.width / gridPaper.canvas.height;
         let horizontalDiff = (maxY - minY) * displayAspect;
         let horizontalMid = (gridPaper.displayRect.minX + gridPaper.displayRect.maxX) / 2;
@@ -138,12 +155,30 @@ export default class UIOverlay {
       let boundHeight = gridPaper.bound.maxY - gridPaper.bound.minY;
       let minX = (gridPaper.displayRect.minX - gridPaper.bound.minX)/boundWidth;
       let maxX = (gridPaper.displayRect.maxX - gridPaper.bound.minX)/boundWidth;
-      let minY = (gridPaper.displayRect.maxY - gridPaper.bound.minY)/boundHeight;
-      let maxY = (gridPaper.displayRect.minY - gridPaper.bound.maxY)/boundHeight;
-      [
-        this.horizontalBar.lowerRange,  this.horizontalBar.upperRange,
-        this.verticalBar.lowerRange,    this.verticalBar.upperRange
-      ] = [ minX, maxX, minY, maxY ];
+      let minY = (gridPaper.bound.maxY - gridPaper.displayRect.maxY)/boundHeight;
+      let maxY = (gridPaper.bound.maxY - gridPaper.displayRect.minY)/boundHeight;
+      console.log([minY, maxY]);
+      this.horizontalBar.setLowerRange(minX);
+      this.horizontalBar.setUpperRange(maxX);
+      this.verticalBar.setLowerRange(minY);
+      this.verticalBar.setUpperRange(maxY);
     }
+
+    // Binding preview window area events
+    this.eventActiveArea.addEventListener('keydown', (event) => {
+      if(event.ctrlKey)   this.ctrlDownFlag   = true;
+      if(event.altKey)    this.altDownFlag    = true;
+      if(event.shiftKey)  this.shiftDownFlag  = true;
+    });
+    this.eventActiveArea.addEventListener('keyup', (event) => {
+      if(event.ctrlKey)   this.ctrlDownFlag   = false;
+      if(event.altKey)    this.altDownFlag    = false;
+      if(event.shiftKey)  this.shiftDownFlag  = false;
+    });
+    this.eventActiveArea.addEventListener('wheel', (event) => {
+      event.preventDefault();
+      let pPos = gridPaper.paperProject.view.viewToProject(new paper.Point(event.offsetX, event.offsetY));
+      gridPaper.zoomDisplay(pPos, 1.2);
+    });
   }
 }
