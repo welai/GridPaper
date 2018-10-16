@@ -14,13 +14,20 @@ export default class UIOverlay {
    * Synchronize UI components with the geometric properties
    */
   syncView  : () => void;
-  private horizontalBar : dual.HRange;
-  private verticalBar   : dual.VRange;
+  /**
+   * Horizontal dual range bar
+   */
+  horizontalBar : dual.HRange;
+  /**
+   * Vertical dual range bar
+   */
+  verticalBar   : dual.VRange;
 
   // Flags
   private ctrlDownFlag  = false;
   private altDownFlag   = false;
   private shiftDownFlag = false;
+  private mouseOver     = false;
 
   constructor(gridPaper: GridPaper) {
     // Create UI Overlay
@@ -157,28 +164,45 @@ export default class UIOverlay {
       let maxX = (gridPaper.displayRect.maxX - gridPaper.bound.minX)/boundWidth;
       let minY = (gridPaper.bound.maxY - gridPaper.displayRect.maxY)/boundHeight;
       let maxY = (gridPaper.bound.maxY - gridPaper.displayRect.minY)/boundHeight;
-      console.log([minY, maxY]);
       this.horizontalBar.setLowerRange(minX);
       this.horizontalBar.setUpperRange(maxX);
       this.verticalBar.setLowerRange(minY);
       this.verticalBar.setUpperRange(maxY);
     }
 
+    var mac = false;
+    if(window.navigator.userAgent.search('Mac') > 0) mac = true;
+    this.eventActiveArea.addEventListener('mouseover', (event: MouseEvent) => this.mouseOver = true);
+    this.eventActiveArea.addEventListener('mouseout', (event: MouseEvent) => this.mouseOver = false);
     // Binding preview window area events
-    this.eventActiveArea.addEventListener('keydown', (event) => {
-      if(event.ctrlKey)   this.ctrlDownFlag   = true;
-      if(event.altKey)    this.altDownFlag    = true;
-      if(event.shiftKey)  this.shiftDownFlag  = true;
+    window.addEventListener('keydown', (event) => {
+      if(this.mouseOver) {
+        if(event.key === 'Alt') this.altDownFlag    = true;
+        if(event.shiftKey)      this.shiftDownFlag  = true;
+        if(mac) { if(event.key === 'Meta')      this.ctrlDownFlag = true; }
+        else    { if(event.key === 'Control')   this.ctrlDownFlag = true; }
+      } else {
+        this.altDownFlag = false; this.shiftDownFlag = false; this.ctrlDownFlag = false;
+      }
     });
-    this.eventActiveArea.addEventListener('keyup', (event) => {
-      if(event.ctrlKey)   this.ctrlDownFlag   = false;
-      if(event.altKey)    this.altDownFlag    = false;
-      if(event.shiftKey)  this.shiftDownFlag  = false;
+    window.addEventListener('keyup', (event) => {
+      if(this.mouseOver) {
+        if(event.key === 'Alt') this.altDownFlag    = false;
+        if(event.shiftKey)      this.shiftDownFlag  = false;
+        if(mac) { if(event.key === 'Meta')      this.ctrlDownFlag = false; }
+        else    { if(event.key === 'Control')   this.ctrlDownFlag = false; }
+      } else {
+        this.altDownFlag = false; this.shiftDownFlag = false; this.ctrlDownFlag = false;
+      }
     });
     this.eventActiveArea.addEventListener('wheel', (event) => {
       event.preventDefault();
-      let pPos = gridPaper.paperProject.view.viewToProject(new paper.Point(event.offsetX, event.offsetY));
-      gridPaper.zoomDisplay(pPos, 1.2);
+      // Scaling 
+      if(this.altDownFlag) {
+        let pPos = gridPaper.paperProject.view.viewToProject(new paper.Point(event.offsetX, event.offsetY));
+        let d = event.deltaY/1000;
+        gridPaper.zoomDisplay(pPos, Math.exp(d));
+      }
     });
   }
 }

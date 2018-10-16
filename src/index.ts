@@ -67,7 +67,8 @@ export class GridPaper {
       this.displayRect.minY,
       this.displayRect.maxY
     ];
-    let [ w, h ] = [ this.canvas.width, this.canvas.height ];
+    let p = this.paperProject.view.pixelRatio;
+    let [ w, h ] = [this.canvas.width/p, this.canvas.height/p];
     this.paperProject.view.matrix.a = w/(maxX -minX);
     this.paperProject.view.matrix.b = 0;
     this.paperProject.view.matrix.c = 0;
@@ -98,7 +99,7 @@ export class GridPaper {
 
     let parent = this;
     // Display rect
-    this.displayRect = {
+    (window as any).displayRect = this.displayRect = {
       _minx: config.bound.minX, _maxx: config.bound.maxX, _maxy: config.bound.maxY,
       _miny: config.bound.maxY - (config.bound.maxX - config.bound.minX)/this.canvas.width*this.canvas.height,
       get minX() { return this._minx; },
@@ -195,10 +196,17 @@ export class GridPaper {
       y = args[1] as number;
     }
     let scale = args.pop();
+    // Nothing to scale
+    if(scale == 1) return;
     // Too big to scale
-    if(this.displayRect.minX == this.bound.minX && this.displayRect.maxX == this.bound.maxX
-      || this.displayRect.minY == this.bound.minY && this.displayRect.maxY == this.bound.maxY)
+    if(scale > 1 && (this.displayRect.minX == this.bound.minX && this.displayRect.maxX == this.bound.maxX
+      || this.displayRect.minY == this.bound.minY && this.displayRect.maxY == this.bound.maxY))
         return;
+    // Too small to scale
+    if(scale < 1 && this.uiOverlay.horizontalBar.upperRange - this.uiOverlay.horizontalBar.lowerRange < this.uiOverlay.horizontalBar.minDifference)
+      return;
+    if(scale < 1 && this.uiOverlay.verticalBar.upperRange - this.uiOverlay.verticalBar.lowerRange < this.uiOverlay.verticalBar.minDifference)
+      return;
     let offsets: Rect = {
       minX: this.displayRect.minX - x,
       maxX: this.displayRect.maxX - x,
