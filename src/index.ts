@@ -1,5 +1,5 @@
 import { Config, defaultConfig } from './Config';
-import Rect from './Rect';
+import { Rect, GeometricRect } from './Rect';
 import UIOverlay from './UiController';
 
 // TODO: Grids
@@ -13,15 +13,6 @@ import UIOverlay from './UiController';
   if (typeof paper === 'undefined')
     throw Error('paper.js is not detected.\nThis might happen due to a broken dependency');
 })();
-
-// TODO: Enable custom callbacks
-interface GeometricRect extends Rect {
-  _minx: number, _maxx: number, _miny: number, _maxy: number,
-  setMinX?: (newVal: number) => void,
-  setMaxX?: (newVal: number) => void,
-  setMinY?: (newVal: number) => void,
-  setMaxY?: (newVal: number) => void
-}
 
 // A user interface on canvas
 export class GridPaper {
@@ -276,6 +267,10 @@ export class GridPaper {
     this.displayRect.maxY = expected.maxY;
     this.uiOverlay.syncView();
   }
+  /**
+   * Zoom factor of current view: display/bound
+   */
+  get zoomFactor() { return (this.displayRect.maxX - this.displayRect.minX)/(this.bound.maxX - this.bound.minX); }
 
   scrollHorizontally(offset: number) {
     if(this.displayRect.minX + offset < this.bound.minX) offset = this.bound.minX - this.displayRect.minX;

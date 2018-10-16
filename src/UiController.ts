@@ -198,7 +198,7 @@ export default class UIOverlay {
     this.eventActiveArea.addEventListener('wheel', (event) => {
       event.preventDefault();
 
-      let r = (gridPaper.displayRect.maxX - gridPaper.displayRect.minX)/(gridPaper.bound.maxX - gridPaper.bound.minX);
+      let r = gridPaper.zoomFactor;
 
       // Scaling 
       if(this.altDownFlag) {
