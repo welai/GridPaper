@@ -16,38 +16,31 @@ import UIOverlay from './UiController';
 
 // A user interface on canvas
 export class GridPaper {
-  /**
-   * Grid paper container, the div element to initialize on
-   */
+  /** Grid paper container, the div element to initialize on */
   container: HTMLElement;
-  /**
-   * UI control conponents
-   */
+  /** UI control conponents */
   uiOverlay: UIOverlay;
-  /**
-   * Canvas to draw
-   */
+  /** Canvas to draw */
   canvas: HTMLCanvasElement;
 
   // Paper stuffs
-  /**
-   * Paper project instance
-   */
+  /** Paper project instance */
   paperProject: paper.Project;
-  /**
-   * Paper tool instance
-   */
+  /** Paper tool instance */
   paperTool: paper.Tool;
 
   // Geometric properties
-  /**
-   * The coordinary boundary of the project
-   */
+  /** The coordinary boundary of the project */
   bound: GeometricRect;
-  /**
-   * Rectangular area indicating current display
-   */
+  /** Rectangular area indicating current display */
   displayRect: GeometricRect;
+
+  // Grid properties
+  /** Max major grid density, number of lines/pixel */
+  maxGridDensity: number = 1;
+
+  /** Grid series */
+  gridSeries: number[][];
 
   // Flags
   private aspectLock = true;
@@ -69,9 +62,13 @@ export class GridPaper {
     this.paperProject.view.matrix.d = h/(minY - maxY);
     this.paperProject.view.matrix.tx = w*minX/(minX - maxX);
     this.paperProject.view.matrix.ty = h*maxY/(maxY - minY);
+    this.updateGridLines();
   }
 
   constructor(config: Config) {
+    // Grid series
+    this.gridSeries = config.gridSeries;
+
     // UI and canvas container
     var container = document.getElementById(config.elementID);
     this.container = container;
@@ -174,9 +171,7 @@ export class GridPaper {
   }
 
   // View controlling
-  /**
-   * Scaling the display rectangle
-   */
+  /** Scaling the display rectangle */
   zoomDisplay(point: paper.Point, scale: number): void;
   zoomDisplay(projectX: number, projectY: number, scale: number): void;
   zoomDisplay(...args: any[]) {
@@ -191,10 +186,10 @@ export class GridPaper {
     }
     let scale = args.pop();
     // Nothing to scale
-    if(scale == 1) return;
+    if(scale === 1) return;
     // Too big to scale
-    if(scale > 1 && (this.displayRect.minX == this.bound.minX && this.displayRect.maxX == this.bound.maxX
-      || this.displayRect.minY == this.bound.minY && this.displayRect.maxY == this.bound.maxY))
+    if(scale > 1 && (this.displayRect.minX === this.bound.minX && this.displayRect.maxX === this.bound.maxX
+      || this.displayRect.minY === this.bound.minY && this.displayRect.maxY === this.bound.maxY))
         return;
     // Too small to scale
     if(scale < 1 && this.uiOverlay.horizontalBar.upperRange - this.uiOverlay.horizontalBar.lowerRange < this.uiOverlay.horizontalBar.minDifference)
@@ -267,9 +262,7 @@ export class GridPaper {
     this.displayRect.maxY = expected.maxY;
     this.uiOverlay.syncView();
   }
-  /**
-   * Zoom factor of current view: display/bound
-   */
+  /** Zoom factor of current view: display/bound */
   get zoomFactor() { return (this.displayRect.maxX - this.displayRect.minX)/(this.bound.maxX - this.bound.minX); }
 
   scrollHorizontally(offset: number) {
@@ -286,6 +279,58 @@ export class GridPaper {
     this.displayRect.minY += offset;
     this.displayRect.maxY += offset;
     this.uiOverlay.syncView();
+  }
+
+  hMajorGridLines: paper.Path[] = [];
+  hMinorGridLines: paper.Path[] = [];
+  vMajorGridLines: paper.Path[] = [];
+  vMinorGridLines: paper.Path[] = [];
+  updateGridLines() {
+    // Number of max horizontal grid lines
+    let nMaxHorizontal = Math.ceil(this.maxGridDensity * this.canvas.height);
+    // Number of max vertical grid lines
+    let nMaxVertical = Math.ceil(this.maxGridDensity * this.canvas.width);
+    // Check if the grid series is useable
+    const checkGridUseability = (a: number[]) => {
+      let min = Math.min.apply(this, a);
+      if(min * nMaxHorizontal > this.displayRect.maxY - this.displayRect.minY
+        && min * nMaxVertical > this.displayRect.maxX - this.displayRect.minX) return true;
+      else return false;
+    }
+    // Number of major grid lines
+    let nHMajorGridLines = 0, nVMajorGridLines = 0;
+    // Number of minor grid lines
+    let nHMinorGridLines = 0, nVMinorGridLines = 0;
+    for(let i in this.gridSeries) {
+      let max = Math.max.apply(this, this.gridSeries[i]);
+      let min = Math.min.apply(this, this.gridSeries[i]);
+      if(checkGridUseability(this.gridSeries[i])) {
+        nHMajorGridLines = Math.ceil((this.displayRect.maxY - this.displayRect.minY)/max);
+        nVMajorGridLines = Math.ceil((this.displayRect.maxX - this.displayRect.minX)/max);
+        nHMinorGridLines = Math.ceil((this.displayRect.maxY - this.displayRect.minY)/min);
+        nVMinorGridLines = Math.ceil((this.displayRect.maxX - this.displayRect.minX)/min);
+        break;
+      }
+    }
+
+    // Update grid line storages
+    [[this.hMajorGridLines, nHMajorGridLines], [this.vMajorGridLines, nVMajorGridLines],
+      [this.hMinorGridLines, nHMinorGridLines], [this.vMinorGridLines, nVMinorGridLines]].map(
+      args => ((a: paper.Path[], n: number) => {
+        if(a.length < n) {
+          for(let i = 0; i < n - a.length; i++)
+            a.push(new paper.Path([[0, 0], [0, 0]]));
+        } else if(a.length > n) {
+          for(let i = a.length - 1; i >= n; i--)
+            a[i].removeSegments();
+            a.pop();
+        }
+      }
+    ).apply(this, args));
+
+    // TODO: Continue this
+    console.log(nHMinorGridLines);
+    console.log(this.hMinorGridLines);
   }
 
   destruct(): void {
