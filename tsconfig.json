@@ -6,8 +6,7 @@
         "target": "es5",
         "removeComments": true,
         "preserveConstEnums": true,
-        "sourceMap": true,
-        "outDir": "doc/js"
+        "sourceMap": true
     },
     "include": [
         "src/**/*"
