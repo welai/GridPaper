@@ -5,10 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Paper.js test</title>
-    <script src="js/paper.js"></script>
-    <script src="js/index.js"></script>
+    <script src="node_modules/paper/dist/paper-full.min.js"></script>
+    <script src="dist/gridpaper.js"></script>
 </head>
 <body>
     <div id="preview" class="preview-window" style="width:800px;height:600px;border:1px solid gray"></div>
 </body>
+<script>
+window.addEventListener('load', () => {
+  window.gridPaper = new GridPaper({ elementID: 'preview' });
+});
+</script>
 </html>

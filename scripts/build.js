@@ -32,7 +32,7 @@ run('webpack')
     console.log('Copying paper.js...');
     fs  .createReadStream(paperjs)
         .on('error', err => { throw err })
-        .pipe(fs.createWriteStream('doc/js/paper.js', {flags: 'w'}).on('error', err => { throw err }))
+        .pipe(fs.createWriteStream('dist/paper.js', {flags: 'w'}).on('error', err => { throw err }))
         .on('close', () => console.log('Paper.js copied.'));
 })
 .catch(err => console.log(err));

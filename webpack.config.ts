@@ -15,8 +15,8 @@ const config: webpack.Configuration = {
         extensions: ['.tsx', '.ts', '.js']
     },
     output: {
-        path: path.resolve(__dirname, 'doc/js'),
-        filename: 'index.js'
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'gridpaper.js'
     }
 };
 

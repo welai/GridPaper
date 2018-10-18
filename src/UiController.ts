@@ -1,4 +1,4 @@
-import { GridPaper } from './index';
+import GridPaper from './GridPaper';
 import * as dual from 'dual-range-bar';
 
 export default class UIOverlay {
