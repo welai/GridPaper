@@ -209,14 +209,15 @@ export default class UIOverlay {
         let pPos = gridPaper.paperProject.view.viewToProject(new paper.Point(event.offsetX, event.offsetY));
         let d = event.deltaY/1000;
         gridPaper.zoomDisplay(pPos, Math.exp(d));
-      }
-      if(this.shiftDownFlag) {
-        let d = event.deltaY/r;
-        if(d === 0) d = event.deltaX/r;
-        gridPaper.scrollHorizontally(d);
       } else {
-        let d = -event.deltaY/r;
-        gridPaper.scrollVertically(d);
+        if(this.shiftDownFlag) {
+          let d = event.deltaY/r;
+          if(d === 0) d = event.deltaX/r;
+          gridPaper.scrollHorizontally(d);
+        } else {
+          let d = -event.deltaY/r;
+          gridPaper.scrollVertically(d);
+        }
       }
     });
   }

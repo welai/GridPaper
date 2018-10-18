@@ -39,17 +39,21 @@ export class GridPaper {
   /** Max major grid density, number of lines/pixel */
   majorGridDensity: number = 0.02;
 
-  /** Flag to toggle grid display */
-  showGrid = true;
-
   /** Grid series */
   gridSeries: number[][];
 
   // Flags
   private aspectLock = true;
+  /** Canvas aspect locked */
   get aspectLocked() { return this.aspectLock; }
   set aspectLocked(newVal) { this.aspectLock = newVal; }
+  //
+  private showGridFlag = true;
+  /** Flag to toggle grid display */
+  get showGrid() { return this.showGridFlag; }
+  set showGrid(newVal) { this.showGridFlag = newVal; this.display(); }
   
+  /** Update canvas geometric settings */
   display() {
     let [ minX, maxX, minY, maxY ] = [
       this.displayRect.minX,
@@ -172,15 +176,6 @@ export class GridPaper {
 
     this.paperTool.onMouseDown = (event: paper.ToolEvent) => {
       this.paperProject.view.translate(new paper.Point(10, 10));
-    }
-
-    // TODO: Remove this part
-    for(let i = config.bound.minX; i <= config.bound.maxX; i += 400) {
-      for(let j = config.bound.minY; j <= config.bound.maxY; j += 400) {
-        var point = new paper.Point(i, j);
-        var text = new paper.PointText({ content: `${i}, ${j}`, justification: 'center' });
-        text.point = point;
-      }
     }
     
     this.display();
@@ -318,7 +313,7 @@ export class GridPaper {
     // Number of minor grid lines
     let nHMinorGridLines = 0, nVMinorGridLines = 0;
     let useableGrid: number[] = [0, 0];
-    if(this.showGrid) {
+    if(this.showGridFlag) {
       for(let i in this.gridSeries) {
         let max = Math.max.apply(this, this.gridSeries[i]);
         let min = Math.min.apply(this, this.gridSeries[i]);
@@ -342,11 +337,6 @@ export class GridPaper {
             for(let i = 0; i < n - length; i++) {
               a.push(new paper.Path([[0, 0], [0, 0]]));
             }
-          } else if(length > n) {
-            for(let i = length - 1; i >= n; i--) {
-              a[i].removeSegments();
-              a.pop();
-            }
           }
     }).apply(this, args));
 
@@ -356,18 +346,18 @@ export class GridPaper {
     let firstMajorHLineY = Math.ceil(this.displayRect.minY / maxUseable) * maxUseable;
     for(let hline of this.hMajorGridLines) {
       hline.segments[0].point.x = this.displayRect.minX - 10;
-      hline.segments[1].point.x = this.displayRect.maxX + 10;
       hline.segments[0].point.y = firstMajorHLineY + i * maxUseable;
+      hline.segments[1].point.x = this.displayRect.maxX + 10;
       hline.segments[1].point.y = firstMajorHLineY + i * maxUseable;
       i++;
     }
     i = 0;
     let firstMajorVLineX = Math.ceil(this.displayRect.minX / maxUseable) * maxUseable;
     for(let vline of this.vMajorGridLines) {
-      vline.segments[0].point.y = this.displayRect.minY - 10;
-      vline.segments[1].point.y = this.displayRect.maxY + 10;
       vline.segments[0].point.x = firstMajorVLineX + i * maxUseable;
+      vline.segments[0].point.y = this.displayRect.minY - 10;
       vline.segments[1].point.x = firstMajorVLineX + i * maxUseable;
+      vline.segments[1].point.y = this.displayRect.maxY + 10;
       i++;
     }
     i = 0;
@@ -375,8 +365,8 @@ export class GridPaper {
     let firstMinorHLineY = Math.ceil(this.displayRect.minY / minUseable) * minUseable;
     for(let hline of this.hMinorGridLines) {
       hline.segments[0].point.x = this.displayRect.minX - 10;
-      hline.segments[1].point.x = this.displayRect.maxX + 10;
       hline.segments[0].point.y = firstMinorHLineY + i * minUseable;
+      hline.segments[1].point.x = this.displayRect.maxX + 10;
       hline.segments[1].point.y = firstMinorHLineY + i * minUseable;
       i++;
     }
@@ -398,12 +388,12 @@ export class GridPaper {
 
   /** Stylizing major grid lines */
   stylizeMajor(line: paper.Path) {
-    line.strokeColor = '#888888';
+    line.strokeColor = '#CCCCCC';
     line.strokeWidth = this.zoomFactor * 2;
   }
   /** Styleizing minor grid lines */
   stylizeMinor(line: paper.Path) {
-    line.strokeColor = '#AAAAAA';
+    line.strokeColor = '#DDDDDD';
     line.strokeWidth = this.zoomFactor;
   }
 

@@ -6,7 +6,8 @@ export interface UserConfig {
   // The grid series
   gridSeries?: number[][],
   // Coordinate limit
-  bound?: Rect
+  bound?: Rect,
+  // 
 };
 
 export interface Config extends UserConfig {
