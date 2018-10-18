@@ -37,7 +37,10 @@ export class GridPaper {
 
   // Grid properties
   /** Max major grid density, number of lines/pixel */
-  maxGridDensity: number = 1;
+  majorGridDensity: number = 0.02;
+
+  /** Flag to toggle grid display */
+  showGrid = true;
 
   /** Grid series */
   gridSeries: number[][];
@@ -54,15 +57,17 @@ export class GridPaper {
       this.displayRect.minY,
       this.displayRect.maxY
     ];
-    let p = this.paperProject.view.pixelRatio;
-    let [ w, h ] = [this.canvas.width/p, this.canvas.height/p];
-    this.paperProject.view.matrix.a = w/(maxX -minX);
-    this.paperProject.view.matrix.b = 0;
-    this.paperProject.view.matrix.c = 0;
-    this.paperProject.view.matrix.d = h/(minY - maxY);
-    this.paperProject.view.matrix.tx = w*minX/(minX - maxX);
-    this.paperProject.view.matrix.ty = h*maxY/(maxY - minY);
-    this.updateGridLines();
+    if(maxX > minX && maxY > minY) {
+      let p = this.paperProject.view.pixelRatio;
+      let [ w, h ] = [this.canvas.width/p, this.canvas.height/p];
+      this.paperProject.view.matrix.a = w/(maxX -minX);
+      this.paperProject.view.matrix.b = 0;
+      this.paperProject.view.matrix.c = 0;
+      this.paperProject.view.matrix.d = h/(minY - maxY);
+      this.paperProject.view.matrix.tx = w*minX/(minX - maxX);
+      this.paperProject.view.matrix.ty = h*maxY/(maxY - minY);
+      this.updateGridLines();
+    }
   }
 
   constructor(config: Config) {
@@ -98,26 +103,30 @@ export class GridPaper {
       get minY() { return this._miny; },
       get maxY() { return this._maxy; },
       set minX(newVal: number) {
-        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
         this.setMinX(newVal);
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        parent.display();
       },
       set maxX(newVal: number) {
-        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
         this.setMaxX(newVal);
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        parent.display();
       },
       set minY(newVal: number) {
-        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
         this.setMinY(newVal);
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        parent.display();
       },
       set maxY(newVal: number) {
-        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
         this.setMaxY(newVal);
+        if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
+        parent.display();
       },
       // These setting functions have no callbacks
-      setMinX(newVal: number) { this._minx = newVal; parent.display(); },
-      setMaxX(newVal: number) { this._maxx = newVal; parent.display(); },
-      setMinY(newVal: number) { this._miny = newVal; parent.display(); },
-      setMaxY(newVal: number) { this._maxy = newVal; parent.display(); }
+      setMinX(newVal: number) { this._minx = newVal; },
+      setMaxX(newVal: number) { this._maxx = newVal; },
+      setMinY(newVal: number) { this._miny = newVal; },
+      setMaxY(newVal: number) { this._maxy = newVal; }
     };
 
     // Bound rect
@@ -130,24 +139,28 @@ export class GridPaper {
       set minX(newVal: number) {
         if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
         this.setMinX(newVal);
+        parent.display();
       },
       set maxX(newVal: number) {
         if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
         this.setMaxX(newVal);
+        parent.display();
       },
       set minY(newVal: number) {
         if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
         this.setMinY(newVal);
+        parent.display();
       },
       set maxY(newVal: number) {
         if (parent.uiOverlay) { parent.uiOverlay.syncView(); }
         this.setMaxY(newVal);
+        parent.display();
       },
       // These setting functions have no callbacks
-      setMinX(newVal: number) { this._minx = newVal; parent.display(); },
-      setMaxX(newVal: number) { this._maxx = newVal; parent.display(); },
-      setMinY(newVal: number) { this._miny = newVal; parent.display(); },
-      setMaxY(newVal: number) { this._maxy = newVal; parent.display(); }
+      setMinX(newVal: number) { this._minx = newVal; },
+      setMaxX(newVal: number) { this._maxx = newVal; },
+      setMinY(newVal: number) { this._miny = newVal; },
+      setMaxY(newVal: number) { this._maxy = newVal; }
     };
 
     // Create UI overlay
@@ -160,6 +173,8 @@ export class GridPaper {
     this.paperTool.onMouseDown = (event: paper.ToolEvent) => {
       this.paperProject.view.translate(new paper.Point(10, 10));
     }
+
+    // TODO: Remove this part
     for(let i = config.bound.minX; i <= config.bound.maxX; i += 400) {
       for(let j = config.bound.minY; j <= config.bound.maxY; j += 400) {
         var point = new paper.Point(i, j);
@@ -167,6 +182,7 @@ export class GridPaper {
         text.point = point;
       }
     }
+    
     this.display();
   }
 
@@ -287,50 +303,108 @@ export class GridPaper {
   vMinorGridLines: paper.Path[] = [];
   updateGridLines() {
     // Number of max horizontal grid lines
-    let nMaxHorizontal = Math.ceil(this.maxGridDensity * this.canvas.height);
+    let nMaxHorizontal = Math.ceil(this.majorGridDensity * this.canvas.height);
     // Number of max vertical grid lines
-    let nMaxVertical = Math.ceil(this.maxGridDensity * this.canvas.width);
+    let nMaxVertical = Math.ceil(this.majorGridDensity * this.canvas.width);
     // Check if the grid series is useable
     const checkGridUseability = (a: number[]) => {
-      let min = Math.min.apply(this, a);
-      if(min * nMaxHorizontal > this.displayRect.maxY - this.displayRect.minY
-        && min * nMaxVertical > this.displayRect.maxX - this.displayRect.minX) return true;
+      let max = Math.max.apply(this, a);
+      if(max * nMaxHorizontal > this.displayRect.maxY - this.displayRect.minY
+        && max * nMaxVertical > this.displayRect.maxX - this.displayRect.minX) return true;
       else return false;
     }
     // Number of major grid lines
     let nHMajorGridLines = 0, nVMajorGridLines = 0;
     // Number of minor grid lines
     let nHMinorGridLines = 0, nVMinorGridLines = 0;
-    for(let i in this.gridSeries) {
-      let max = Math.max.apply(this, this.gridSeries[i]);
-      let min = Math.min.apply(this, this.gridSeries[i]);
-      if(checkGridUseability(this.gridSeries[i])) {
-        nHMajorGridLines = Math.ceil((this.displayRect.maxY - this.displayRect.minY)/max);
-        nVMajorGridLines = Math.ceil((this.displayRect.maxX - this.displayRect.minX)/max);
-        nHMinorGridLines = Math.ceil((this.displayRect.maxY - this.displayRect.minY)/min);
-        nVMinorGridLines = Math.ceil((this.displayRect.maxX - this.displayRect.minX)/min);
-        break;
+    let useableGrid: number[] = [0, 0];
+    if(this.showGrid) {
+      for(let i in this.gridSeries) {
+        let max = Math.max.apply(this, this.gridSeries[i]);
+        let min = Math.min.apply(this, this.gridSeries[i]);
+        if(checkGridUseability(this.gridSeries[i])) {
+          useableGrid = this.gridSeries[i];
+          nHMajorGridLines = Math.ceil((this.displayRect.maxY - this.displayRect.minY)/max);
+          nVMajorGridLines = Math.ceil((this.displayRect.maxX - this.displayRect.minX)/max);
+          nHMinorGridLines = Math.ceil((this.displayRect.maxY - this.displayRect.minY)/min);
+          nVMinorGridLines = Math.ceil((this.displayRect.maxX - this.displayRect.minX)/min);
+          break;
+        }
       }
     }
 
     // Update grid line storages
-    [[this.hMajorGridLines, nHMajorGridLines], [this.vMajorGridLines, nVMajorGridLines],
-      [this.hMinorGridLines, nHMinorGridLines], [this.vMinorGridLines, nVMinorGridLines]].map(
-      args => ((a: paper.Path[], n: number) => {
-        if(a.length < n) {
-          for(let i = 0; i < n - a.length; i++)
-            a.push(new paper.Path([[0, 0], [0, 0]]));
-        } else if(a.length > n) {
-          for(let i = a.length - 1; i >= n; i--)
-            a[i].removeSegments();
-            a.pop();
-        }
-      }
-    ).apply(this, args));
+    [[this.hMajorGridLines, nHMajorGridLines], [this.hMinorGridLines, nHMinorGridLines],
+      [this.vMajorGridLines, nVMajorGridLines], [this.vMinorGridLines, nVMinorGridLines]]
+        .map(args => ((a: paper.Path[], n: number) => {
+          let length = a.length;
+          if(length < n) {
+            for(let i = 0; i < n - length; i++) {
+              a.push(new paper.Path([[0, 0], [0, 0]]));
+            }
+          } else if(length > n) {
+            for(let i = length - 1; i >= n; i--) {
+              a[i].removeSegments();
+              a.pop();
+            }
+          }
+    }).apply(this, args));
 
-    // TODO: Continue this
-    console.log(nHMinorGridLines);
-    console.log(this.hMinorGridLines);
+    // Here to update the grid lines
+    let i = 0;
+    let maxUseable = Math.max.apply(this, useableGrid);
+    let firstMajorHLineY = Math.ceil(this.displayRect.minY / maxUseable) * maxUseable;
+    for(let hline of this.hMajorGridLines) {
+      hline.segments[0].point.x = this.displayRect.minX - 10;
+      hline.segments[1].point.x = this.displayRect.maxX + 10;
+      hline.segments[0].point.y = firstMajorHLineY + i * maxUseable;
+      hline.segments[1].point.y = firstMajorHLineY + i * maxUseable;
+      i++;
+    }
+    i = 0;
+    let firstMajorVLineX = Math.ceil(this.displayRect.minX / maxUseable) * maxUseable;
+    for(let vline of this.vMajorGridLines) {
+      vline.segments[0].point.y = this.displayRect.minY - 10;
+      vline.segments[1].point.y = this.displayRect.maxY + 10;
+      vline.segments[0].point.x = firstMajorVLineX + i * maxUseable;
+      vline.segments[1].point.x = firstMajorVLineX + i * maxUseable;
+      i++;
+    }
+    i = 0;
+    let minUseable = Math.min.apply(this, useableGrid);
+    let firstMinorHLineY = Math.ceil(this.displayRect.minY / minUseable) * minUseable;
+    for(let hline of this.hMinorGridLines) {
+      hline.segments[0].point.x = this.displayRect.minX - 10;
+      hline.segments[1].point.x = this.displayRect.maxX + 10;
+      hline.segments[0].point.y = firstMinorHLineY + i * minUseable;
+      hline.segments[1].point.y = firstMinorHLineY + i * minUseable;
+      i++;
+    }
+    i = 0;
+    let firstMinorVLineX = Math.ceil(this.displayRect.minX / minUseable) * minUseable;
+    for(let vline of this.vMinorGridLines) {
+      vline.segments[0].point.y = this.displayRect.minY - 10;
+      vline.segments[1].point.y = this.displayRect.maxY + 10;
+      vline.segments[0].point.x = firstMinorVLineX + i * minUseable;
+      vline.segments[1].point.x = firstMinorVLineX + i * minUseable;
+      i++;
+    }
+    
+    this.hMajorGridLines.map(this.stylizeMajor, this);
+    this.vMajorGridLines.map(this.stylizeMajor, this);
+    this.hMinorGridLines.map(this.stylizeMinor, this);
+    this.vMinorGridLines.map(this.stylizeMinor, this);
+  }
+
+  /** Stylizing major grid lines */
+  stylizeMajor(line: paper.Path) {
+    line.strokeColor = '#888888';
+    line.strokeWidth = this.zoomFactor * 2;
+  }
+  /** Styleizing minor grid lines */
+  stylizeMinor(line: paper.Path) {
+    line.strokeColor = '#AAAAAA';
+    line.strokeWidth = this.zoomFactor;
   }
 
   destruct(): void {

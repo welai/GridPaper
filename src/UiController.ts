@@ -104,6 +104,7 @@ export default class UIOverlay {
       let maxX = upper * (gridPaper.bound.maxX - gridPaper.bound.minX) + gridPaper.bound.minX;
       gridPaper.displayRect.setMinX(minX);
       gridPaper.displayRect.setMaxX(maxX);
+      gridPaper.display();
       // Calculate the veritcal bar
       if (gridPaper.aspectLocked) {
         let displayAspect = gridPaper.canvas.width / gridPaper.canvas.height;
@@ -139,12 +140,15 @@ export default class UIOverlay {
         if (horizontalMid - horizontalDiff / 2 < gridPaper.bound.minX) {
           gridPaper.displayRect.setMinX(gridPaper.bound.minX);
           gridPaper.displayRect.setMaxX(gridPaper.bound.minX + horizontalDiff);
+          gridPaper.display();
         } else if (horizontalMid + horizontalDiff / 2 > gridPaper.bound.maxX) {
           gridPaper.displayRect.setMinX(gridPaper.bound.maxX - horizontalDiff);
           gridPaper.displayRect.setMaxX(gridPaper.bound.maxX);
+          gridPaper.display();
         } else {
           gridPaper.displayRect.setMinX(horizontalMid - horizontalDiff / 2);
           gridPaper.displayRect.setMaxX(horizontalMid + horizontalDiff / 2);
+          gridPaper.display();
         }
       }
       // Synchronize the changes to the scroll bars

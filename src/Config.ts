@@ -19,6 +19,6 @@ export interface Config extends UserConfig {
 
 export var defaultConfig: Config = {
   elementID: 'preview',
-  gridSeries: [[0.1, 0.1], [0.2, 0.2], [0.5, 0.1], [1, 0.5], [2, 2], [5, 1], [10, 1]],
-  bound: { minX: -4000, maxX: 4000, minY: -6000, maxY: 6000 },
+  gridSeries: [[10, 2], [50, 10], [100, 10]],
+  bound: { minX: -500, maxX: 1500, minY: -500, maxY: 1500 },
 };
