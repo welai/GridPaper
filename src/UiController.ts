@@ -103,7 +103,7 @@ export default class UIOverlay {
     <rect x="40" y="70" width="24" height="24"/>
     <rect x="70" y="70" width="24" height="24"/>
   </svg>`
-    gridButton.style.lineHeight = '100%';
+    gridButton.style.lineHeight = '120%';
     gridButton.style.textAlign = 'center';
     gridButton.addEventListener('click', (event) => {
       gridPaper.showGrids = !gridPaper.showGrids;

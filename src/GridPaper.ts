@@ -3,6 +3,9 @@ import { Rect, GeometricRect } from './Rect';
 import UIOverlay from './UiController';
 
 // A user interface on canvas
+/**
+ * GridPaper main class
+ */
 export default class GridPaper {
   // HTML elements
   /** Grid paper container, the div element to initialize on */
@@ -75,6 +78,7 @@ export default class GridPaper {
     // UI and canvas container
     var container = document.getElementById(config.elementID);
     this.container = container;
+    this.container.style.textAlign = 'left';
     this.container.style.position = 'relative';
 
     // Create canvas
@@ -85,8 +89,8 @@ export default class GridPaper {
     this.canvas.style.height = '100%';
     this.container.appendChild(this.canvas);
     var resizeCallback = () => {
-      this.canvas.width = this.canvas.clientWidth;
-      this.canvas.height = this.canvas.clientHeight;
+      this.canvas.width = this.container.clientWidth;
+      this.canvas.height = this.container.clientHeight;
     }
     resizeCallback();
     this.canvas.addEventListener('resize', resizeCallback);

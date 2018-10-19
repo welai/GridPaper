@@ -1,8 +1,9 @@
 {
   "name": "gridpaper",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Paper.js canvas with view controlling and grids",
-  "main": "dist/gridpaper.min.js",
+  "main": "./dist/gridpaper.min.js",
+  "types": "./src/index.ts",
   "scripts": {
     "build": "webpack",
     "clean": "rm -rf dist",
