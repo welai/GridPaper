@@ -1,27 +1,22 @@
 import GridPaper from './GridPaper';
 import * as dual from 'dual-range-bar';
+import './style.css';
 
 export default class UIOverlay {
-  /**
-   * UI Overlay Container
-   */
-  container : HTMLElement;
-  /**
-   * This area lies below the UI components, and works as the event receiver
-   */
+  /** UI Overlay Container */
+  container: HTMLElement;
+  /** This area lies below the UI components, and works as the event receiver */
   eventActiveArea: HTMLElement;
-  /**
-   * Synchronize UI components with the geometric properties
-   */
-  syncView  : () => void;
-  /**
-   * Horizontal dual range bar
-   */
-  horizontalBar : dual.HRange;
-  /**
-   * Vertical dual range bar
-   */
-  verticalBar   : dual.VRange;
+  /** Synchronize UI components with the geometric properties */
+  syncView: () => void;
+  /** Horizontal dual range bar */
+  horizontalBar: dual.HRange;
+  /** Vertical dual range bar */
+  verticalBar: dual.VRange;
+  /** Toggling grid button container */
+  buttonContainer: HTMLElement;
+  /** Button to toggle grid display */
+  gridButton: HTMLButtonElement;
 
   // Flags
   private ctrlDownFlag  = false;
@@ -39,11 +34,13 @@ export default class UIOverlay {
 
     // Horizontal dual range bar for scrolling
     let hbarContainer = document.createElement('div');
+    hbarContainer.className = 'hbar-container';
     hbarContainer.style.height = '20px';
-    hbarContainer.style.width = 'calc(100% - 100px)';
-    hbarContainer.style.margin = '10px 30px';
+    hbarContainer.style.width = 'calc(100% - 125px)';
+    hbarContainer.style.margin = '20px 40px';
     hbarContainer.style.position = 'absolute';
     hbarContainer.style.bottom = '0px';
+    hbarContainer.style.zIndex = '1';
     let hbar = document.createElement('div');
     hbar.id = `horizontal-scrolling-bar-${new Date().getTime()}`;
     hbar.style.height = '100%';
@@ -56,11 +53,13 @@ export default class UIOverlay {
     this.horizontalBar.upperBound = 1;
     // Vertical dual range bar for scrolling
     let vbarContainer = document.createElement('div');
-    vbarContainer.style.height = 'calc(100% - 100px)';
+    vbarContainer.className = 'vbar-container';
+    vbarContainer.style.height = 'calc(100% - 120px)';
     vbarContainer.style.width = '20px';
-    vbarContainer.style.margin = '30px 10px';
+    vbarContainer.style.margin = '40px 20px';
     vbarContainer.style.position = 'absolute';
     vbarContainer.style.right = '0px';
+    vbarContainer.style.zIndex = '1';
     let vbar = document.createElement('div');
     vbar.id = `vertical-scrolling-bar-${new Date().getTime()}`;
     vbar.style.height = '100%';
@@ -71,6 +70,50 @@ export default class UIOverlay {
     this.verticalBar = dual.VRange.getObject(vbar.id);
     this.verticalBar.lowerBound = 0;
     this.verticalBar.upperBound = 1;
+    
+    // Grid toggling button
+    let buttonContainer = this.buttonContainer = document.createElement('div');
+    buttonContainer.className = 'button-container';
+    buttonContainer.style.width = '42px';
+    buttonContainer.style.height = '42px';
+    buttonContainer.style.position = 'absolute';
+    buttonContainer.style.right = '0px';
+    buttonContainer.style.bottom = '0px';
+    buttonContainer.style.margin = '16px';
+    buttonContainer.style.zIndex = '1';
+    let gridButton = this.gridButton = document.createElement('button');
+    gridButton.className = 'grid-button';
+    if(gridPaper.showGrids) {
+      gridButton.classList.add('grid-on');
+    } else {
+      gridButton.classList.add('grid-off');
+    }
+    gridButton.style.width = '42px';
+    gridButton.style.height = '42px';
+    gridButton.innerHTML = `
+  <svg version="1.1" class="icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+  viewBox="0 0 100 100" style="enable-background:new 0 0 100 100;" xml:space="preserve">
+    <rect x="10" y="10" width="24" height="24"/>
+    <rect x="40" y="10" width="24" height="24"/>
+    <rect x="70" y="10" width="24" height="24"/>
+    <rect x="10" y="40" width="24" height="24"/>
+    <rect x="40" y="40" width="24" height="24"/>
+    <rect x="70" y="40" width="24" height="24"/>
+    <rect x="10" y="70" width="24" height="24"/>
+    <rect x="40" y="70" width="24" height="24"/>
+    <rect x="70" y="70" width="24" height="24"/>
+  </svg>`
+    gridButton.style.lineHeight = '100%';
+    gridButton.style.textAlign = 'center';
+    gridButton.addEventListener('click', (event) => {
+      gridPaper.showGrids = !gridPaper.showGrids;
+      if(gridPaper.showGrids)
+        gridButton.classList.replace('grid-off', 'grid-on');
+      else
+        gridButton.classList.replace('grid-on', 'grid-off');
+    })
+    buttonContainer.appendChild(gridButton);
+    this.container.appendChild(buttonContainer);
 
     // Event active area
     this.eventActiveArea = document.createElement('div');

@@ -38,10 +38,10 @@ export default class GridPaper {
   get aspectLocked() { return this.aspectLock; }
   set aspectLocked(newVal) { this.aspectLock = newVal; }
   //
-  private showGridFlag = true;
+  private showGridsFlag = true;
   /** Flag to toggle grid display */
-  get showGrid() { return this.showGridFlag; }
-  set showGrid(newVal) { this.showGridFlag = newVal; this.display(); }
+  get showGrids() { return this.showGridsFlag; }
+  set showGrids(newVal) { this.showGridsFlag = newVal; this.display(); }
   
 
   /** Update canvas geometric settings */
@@ -70,7 +70,7 @@ export default class GridPaper {
     this.gridSeries = config.gridSeries || defaultConfig.gridSeries;
     this.majorGridDensity = config.majorGridDensity || defaultConfig.majorGridDensity;
     this.aspectLock = config.aspeckLocked || defaultConfig.aspeckLocked;
-    this.showGridFlag = config.showGrid || defaultConfig.showGrid;
+    this.showGridsFlag = config.showGrid || defaultConfig.showGrid;
 
     // UI and canvas container
     var container = document.getElementById(config.elementID);
@@ -305,7 +305,7 @@ export default class GridPaper {
     // Number of minor grid lines
     let nHMinorGridLines = 0, nVMinorGridLines = 0;
     let useableGrid: number[] = [0, 0];
-    if (this.showGridFlag) {
+    if (this.showGridsFlag) {
       for (let i in this.gridSeries) {
         let max = Math.max.apply(this, this.gridSeries[i]);
         let min = Math.min.apply(this, this.gridSeries[i]);
