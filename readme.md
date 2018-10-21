@@ -80,9 +80,7 @@ gridpaper.paperTool
 
 ## TODOs
 
-- Keywords
 - Install directions
-- Add license
 
 ## License
 
