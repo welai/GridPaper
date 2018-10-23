@@ -325,6 +325,8 @@ export default class GridPaper {
     }
 
     // Update grid line storages
+    let savedProject = paper.project;
+    paper.project = this.paperProject;
     [[this.hMajorGridLines, nHMajorGridLines], [this.hMinorGridLines, nHMinorGridLines],
     [this.vMajorGridLines, nVMajorGridLines], [this.vMinorGridLines, nVMinorGridLines]]
       .map(args => ((a: paper.Path[], n: number) => {
@@ -335,6 +337,7 @@ export default class GridPaper {
           }
         }
       }).apply(this, args));
+    paper.project = savedProject;
 
     // Here to update the grid lines
     let i = 0;

@@ -81,6 +81,7 @@ gridpaper.paperTool
 ## TODOs
 
 - Install directions
+- Test multiple gridpapers
 
 ## License
 
