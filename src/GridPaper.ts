@@ -179,6 +179,9 @@ export default class GridPaper {
     this.display();
   }
 
+  /** Use the current paper project */
+  useProject() { paper.project = this.paperProject; }
+
   // View controlling
   /** Scaling the display rectangle */
   zoomDisplay(point: paper.Point, scale: number): void;

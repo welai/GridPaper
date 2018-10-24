@@ -1,6 +1,6 @@
 {
   "name": "gridpaper",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Paper.js canvas with view controlling and grids",
   "keywords": ["ui", "paperjs", "ui-components"],
   "main": "./dist/gridpaper.min.js",
